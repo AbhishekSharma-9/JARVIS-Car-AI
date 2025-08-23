@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Risk Analyzer - JARVIS Car AI</title>
+    <!-- Link to header CSS file -->
+    <link href="/header/header.css" rel="stylesheet" type="text/css" />
+    <!-- Link to chatbot CSS file -->
+    <link href="/chatbot/chatbot.css" rel="stylesheet" type="text/css" />
+    <!-- Link to specific CSS file -->
+    <link href="/css/risk-analyzer.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favico-icon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favico-icon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favico-icon/favicon-16x16.png">
+    <link rel="manifest" href="/favico-icon/site.webmanifest">
+    
+</head>
+<body>
+    <header id="header-placeholder"></header>
+    <div id="google_translate_element" style="display:none;"></div>
+
+    <!-- Main Content -->
+    <main class="main-content page-content">
+        <div class="risk-analyzer-layout">
+            <div class="page-header">
+                <div class="header-left">
+                    <h2><i class="fas fa-robot"></i> AI Risk Analyzer</h2>
+                    <div class="header-actions">
+                        <button class="btn-secondary">
+                            <i class="fas fa-route"></i>
+                            Alternative Route
+                        </button>
+                        <button class="btn-primary">
+                            <i class="fas fa-phone"></i>
+                            Emergency Contact
+                        </button>
+                    </div>
+                </div>
+                <div class="risk-level-badge">
+                    <span class="risk-level medium">MEDIUM</span>
+                </div>
+            </div>
+
+            <div class="risk-dashboard-grid">
+                <!-- Left Column - Main Risk Assessment -->
+                <div class="risk-main-column">
+                    <!-- Current Risk Assessment -->
+                    <div class="risk-assessment-card">
+                        <h3>Current Risk Assessment</h3>
+                        <div class="risk-score-display">
+                            <div class="risk-score-circle">
+                                <div class="score-value">65<span class="score-max">/100</span></div>
+                                <div class="score-label">Risk Score</div>
+                            </div>
+                            <div class="risk-factors">
+                                <div class="factor-item good">
+                                    <i class="fas fa-cloud-sun"></i>
+                                    <span>Weather</span>
+                                    <div class="factor-bar">
+                                        <div class="factor-fill good" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div class="factor-item warning">
+                                    <i class="fas fa-car"></i>
+                                    <span>Traffic</span>
+                                    <div class="factor-bar">
+                                        <div class="factor-fill warning" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div class="factor-item good">
+                                    <i class="fas fa-road"></i>
+                                    <span>Road Conditions</span>
+                                    <div class="factor-bar">
+                                        <div class="factor-fill good" style="width: 90%"></div>
+                                    </div>
+                                </div>
+                                <div class="factor-item warning">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Time of Day</span>
+                                    <div class="factor-bar">
+                                        <div class="factor-fill warning" style="width: 70%"></div>
+                                    </div>
+                                </div>
+                                <div class="factor-item good">
+                                    <i class="fas fa-car-side"></i>
+                                    <span>Vehicle Condition</span>
+                                    <div class="factor-bar">
+                                        <div class="factor-fill good" style="width: 95%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Risk Alerts -->
+                    <div class="active-alerts-card">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Active Risk Alerts</h3>
+                        <div class="alert-list">
+                            <div class="alert-item critical">
+                                <div class="alert-icon">
+                                    <i class="fas fa-cloud-rain"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Heavy Rain Detected</h4>
+                                    <p>Visibility reduced by 1/4 mile. Consider alternative route or delay trip.</p>
+                                    <span class="alert-time">5 minutes</span>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn-alert-primary">Route Options</button>
+                                </div>
+                            </div>
+                            <div class="alert-item warning">
+                                <div class="alert-icon">
+                                    <i class="fas fa-construction"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Construction Zone Ahead</h4>
+                                    <p>Lane restrictions on Highway 101. Expect 20 minute delays.</p>
+                                    <span class="alert-time">3 minutes</span>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn-alert-secondary">Alternative Route</button>
+                                </div>
+                            </div>
+                            <div class="alert-item good">
+                                <div class="alert-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Curve Warning</h4>
+                                    <p>Sharp curve ahead with recommended speed of 25 mph.</p>
+                                    <span class="alert-time">2 minutes</span>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn-alert-info">Reduce Speed</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Environmental Conditions -->
+                    <div class="environmental-card">
+                        <h3>Environmental Conditions</h3>
+                        <div class="env-grid">
+                            <div class="env-item">
+                                <div class="env-icon">
+                                    <i class="fas fa-cloud-rain"></i>
+                                </div>
+                                <div class="env-data">
+                                    <span class="env-value">86°F</span>
+                                    <span class="env-label">Temperature</span>
+                                </div>
+                            </div>
+                            <div class="env-item">
+                                <div class="env-icon">
+                                    <i class="fas fa-wind"></i>
+                                </div>
+                                <div class="env-data">
+                                    <span class="env-value">78%</span>
+                                    <span class="env-label">Humidity</span>
+                                </div>
+                            </div>
+                            <div class="env-item">
+                                <div class="env-icon">
+                                    <i class="fas fa-location-arrow"></i>
+                                </div>
+                                <div class="env-data">
+                                    <span class="env-value">12 mph</span>
+                                    <span class="env-label">Wind Speed</span>
+                                </div>
+                            </div>
+                            <div class="env-item">
+                                <div class="env-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="env-data">
+                                    <span class="env-value">0.5 miles</span>
+                                    <span class="env-label">Visibility</span>
+                                </div>
+                            </div>
+                            <div class="env-item">
+                                <div class="env-icon">
+                                    <i class="fas fa-water"></i>
+                                </div>
+                                <div class="env-data">
+                                    <span class="env-value">Wet</span>
+                                    <span class="env-label">Road Surface</span>
+                                </div>
+                            </div>
+                            <div class="env-item">
+                                <div class="env-icon">
+                                    <i class="fas fa-cloud"></i>
+                                </div>
+                                <div class="env-data">
+                                    <span class="env-value">Overcast</span>
+                                    <span class="env-label">Sky</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Risk Summary & Actions -->
+                <div class="risk-sidebar-column">
+                    <!-- Risk Summary -->
+                    <div class="risk-summary-card">
+                        <h3>Risk Summary</h3>
+                        <div class="summary-stats">
+                            <div class="summary-item current">
+                                <div class="summary-label">Current Level</div>
+                                <div class="summary-value medium">Medium Risk</div>
+                            </div>
+                            <div class="summary-item high">
+                                <div class="summary-label">High Risk Factors</div>
+                                <div class="summary-value">2</div>
+                            </div>
+                            <div class="summary-item medium">
+                                <div class="summary-label">Medium Risk</div>
+                                <div class="summary-value">3</div>
+                            </div>
+                            <div class="summary-item low">
+                                <div class="summary-label">Low Risk</div>
+                                <div class="summary-value">1</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Route Analysis -->
+                    <div class="route-analysis-card">
+                        <h3>Route Analysis</h3>
+                        <div class="route-stats">
+                            <div class="route-stat">
+                                <span class="route-label">Remaining Distance</span>
+                                <span class="route-value">23.4 miles</span>
+                            </div>
+                            <div class="route-stat">
+                                <span class="route-label">ETA</span>
+                                <span class="route-value">42 minutes</span>
+                            </div>
+                            <div class="route-stat">
+                                <span class="route-label">Risk Zones</span>
+                                <span class="route-value warning">3 ahead</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="recommendations-card">
+                        <h3>Recommendations</h3>
+                        <div class="recommendation-list">
+                            <div class="recommendation-item priority-high">
+                                <div class="rec-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <div class="rec-content">
+                                    <h4>Reduce Speed</h4>
+                                    <p>Recommended to reduce speed by 10 mph before taking turn.</p>
+                                </div>
+                            </div>
+                            <div class="recommendation-item priority-medium">
+                                <div class="rec-icon">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                </div>
+                                <div class="rec-content">
+                                    <h4>Increase Distance</h4>
+                                    <p>Maintain extra distance during weather conditions.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Actions -->
+                    <div class="emergency-card">
+                        <h3>Emergency Contacts</h3>
+                        <div class="emergency-buttons">
+                            <button class="emergency-btn">
+                                <i class="fas fa-phone"></i>
+                                Emergency Services
+                            </button>
+                            <button class="emergency-btn roadside">
+                                <i class="fas fa-tools"></i>
+                                Roadside Assistance
+                            </button>
+                            <button class="emergency-btn contact">
+                                <i class="fas fa-user"></i>
+                                Emergency Contact
+                            </button>
+                        </div>
+                        
+                        <!-- High Risk Alert -->
+                        <div class="high-risk-alert">
+                            <div class="alert-header">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>High Risk Alert</span>
+                            </div>
+                            <p>Heavy rain in 10 minutes. Consider pulling over safely or taking alternate route.</p>
+                            <button class="btn-urgent">Find Safe Stop</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Chatbot Placeholder -->
+    <div id="chatbot-placeholder"></div>
+
+    <script src="/js/risk-analyzer.js"></script>
+    <script src="/chatbot/chatbot.js"></script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>

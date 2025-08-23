@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Monitoring - JARVIS Car AI</title>
+    <!-- Link to header CSS file -->
+    <link href="/header/header.css" rel="stylesheet" type="text/css" />
+    <!-- Link to chatbot CSS file -->
+    <link href="/chatbot/chatbot.css" rel="stylesheet" type="text/css" />
+    <!-- Link to specific CSS file -->
+    <link href="/css/driver-monitoring.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favico-icon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favico-icon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favico-icon/favicon-16x16.png">
+    <link rel="manifest" href="/favico-icon/site.webmanifest">
+    
+</head>
+<body>
+    <header id="header-placeholder"></header>
+    <div id="google_translate_element" style="display:none;"></div>
+
+    <main class="main-content">
+        <div class="driver-monitoring-container">
+            <div class="section-header">
+                <h2>Driver Monitoring System</h2>
+                <p>Real-time driver attention and fatigue detection</p>
+            </div>
+            <div class="monitoring-grid">
+                <div class="camera-feed-card">
+                    <div class="camera-header">
+                        <h3>Live Camera Feed</h3>
+                        <button id="camera-toggle" class="camera-toggle-btn">
+                            <i class="fas fa-power-off"></i> Turn Off
+                        </button>
+                    </div>
+                    <div class="camera-preview-container">
+                        <div class="camera-preview">
+                            <div class="camera-status">LIVE</div>
+                        </div>
+                    </div>
+                    <div class="detection-stats">
+                        <div class="stat-item">
+                            <span>Attention Level:</span>
+                            <span class="stat-value status-off" id="attention-level-value">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Eye Closure:</span>
+                            <span class="stat-value status-off" id="eye-closure-value">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Head Position:</span>
+                            <span class="stat-value status-off" id="head-position-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="alerts-panel">
+                    <h3>Real-time Alerts</h3>
+                    <div class="alert-list" id="alert-list">
+                        <!-- Alerts will be added dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="chatbot-placeholder"></div>
+
+    <script src="/js/driver-monitoring.js"></script>
+    <script src="/chatbot/chatbot.js"></script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
