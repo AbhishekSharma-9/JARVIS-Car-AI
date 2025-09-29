@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Driver Monitoring - JARVIS Car AI</title>
-    <!-- Link to header CSS file -->
     <link href="/header/header.css" rel="stylesheet" type="text/css" />
-    <!-- Link to chatbot CSS file -->
     <link href="/chatbot/chatbot.css" rel="stylesheet" type="text/css" />
-    <!-- Link to specific CSS file -->
     <link href="/css/driver-monitoring.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="/preloader/preloader.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -33,34 +30,40 @@
                     <div class="camera-header">
                         <h3>Live Camera Feed</h3>
                         <button id="camera-toggle" class="camera-toggle-btn">
-                            <i class="fas fa-power-off"></i> Turn Off
+                            <i class="fas fa-power-off"></i> Turn On
                         </button>
                     </div>
                     <div class="camera-preview-container">
                         <div class="camera-preview">
-                            <div class="camera-status">LIVE</div>
+                            <div class="camera-status">OFF</div>
+                            <img id="video-feed" src="../monitor.png" alt="Live Camera Feed">
                         </div>
                     </div>
                     <div class="detection-stats">
-                        <div class="stat-item">
-                            <span>Attention Level:</span>
-                            <span class="stat-value status-off" id="attention-level-value">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span>Eye Closure:</span>
-                            <span class="stat-value status-off" id="eye-closure-value">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span>Head Position:</span>
-                            <span class="stat-value status-off" id="head-position-value">-</span>
+                        <div class="detection-stats-grid">
+                            <div class="stat-item">
+                                <span>Drowsiness State:</span>
+                                <span class="stat-value status-off" id="drowsiness-state-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Mood:</span>
+                                <span class="stat-value status-off" id="mood-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Head Position:</span>
+                                <span class="stat-value status-off" id="head-position-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Behavior:</span>
+                                <span class="stat-value status-off" id="behavior-value">-</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="alerts-panel">
                     <h3>Real-time Alerts</h3>
                     <div class="alert-list" id="alert-list">
-                        <!-- Alerts will be added dynamically -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>

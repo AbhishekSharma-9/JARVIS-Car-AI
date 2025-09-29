@@ -181,7 +181,7 @@ body::after {
 }
 
 .camera-toggle-btn {
-    background: var(--accent-red);
+    background: var(--accent-green);
     color: white;
     border: none;
     padding: 8px 15px;
@@ -195,7 +195,7 @@ body::after {
 }
 
 .camera-toggle-btn:hover {
-    background: #ff3333;
+    background: #00e676;
 }
 
 .camera-preview-container {
@@ -221,6 +221,13 @@ body::after {
     transition: background-color 0.3s ease;
 }
 
+/* CHANGE: Added styling for the video/image element */
+#video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .camera-preview.off {
     background: #111;
 }
@@ -229,7 +236,7 @@ body::after {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: var(--accent-red);
+    background: #666; /* Default OFF color */
     color: white;
     padding: 5px 10px;
     border-radius: 4px;
@@ -244,6 +251,13 @@ body::after {
     flex-shrink: 0;
 }
 
+/* IMPORTANT: New grid layout for stats */
+.detection-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+}
+
 .stat-item {
     display: flex;
     justify-content: space-between;
@@ -252,10 +266,6 @@ body::after {
     font-size: 1rem;
     color: var(--text-primary);
     border-bottom: 1px solid var(--border-color);
-}
-
-.stat-item:last-child {
-    border-bottom: none;
 }
 
 .stat-item span:first-child {
@@ -333,6 +343,64 @@ body::after {
     display: block;
 }
 
+.card {
+    background-color: var(--card-bg-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow-small); /* Keep a base shadow */
+    transition: box-shadow 0.3s ease-in-out; /* Add transition for smoothness */
+}
+
+/* Specific styles for camera-feed-card and alerts-panel if they exist */
+.camera-feed-card {
+    flex: 2; /* Adjust as needed */
+    margin-right: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure it takes full height */
+}
+
+.alerts-panel {
+    flex: 1; /* Adjust as needed */
+    height: 100%; /* Ensure it takes full height */
+    overflow-y: auto; /* Allow scrolling for alerts */
+}
+
+@keyframes breathing-critical {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 8px rgba(255, 68, 68, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 68, 68, 0.4);
+  }
+}
+
+@keyframes breathing-warning {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 136, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 8px rgba(255, 136, 0, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 136, 0, 0.4);
+  }
+}
+
+body.flashing-critical .camera-feed-card,
+body.flashing-critical .alerts-panel {
+  animation: breathing-critical 2s ease-in-out infinite;
+}
+
+/* When body has the 'flashing-warning' class, apply this to both cards */
+body.flashing-warning .camera-feed-card,
+body.flashing-warning .alerts-panel {
+  animation: breathing-warning 2s ease-in-out infinite;
+}
+
 @media (max-width: 1024px) {
     body{
         overflow: auto;
@@ -351,6 +419,10 @@ body::after {
     }
     .alerts-panel {
         max-height: 400px;
+    }
+    /* IMPORTANT: Re-adjust stats for smaller screens */
+    .detection-stats-grid {
+        grid-template-columns: 1fr;
     }
 }
 

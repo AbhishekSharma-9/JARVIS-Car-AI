@@ -22,16 +22,10 @@
     <div class="page-wrapper">
       <nav class="vertical-pagination">
         <div class="pagination-dots">
-            <div class="pagination-dot" data-section-id="page1" title="Score Cards">
+            <div class="pagination-dot" data-section-id="page1" title="Main Dashboard">
                 <i class="fas fa-tachometer-alt"></i>
             </div>
-            <div class="pagination-dot" data-section-id="page2" title="Metrics Breakdown">
-                <i class="fas fa-tasks"></i>
-            </div>
-            <div class="pagination-dot" data-section-id="page3" title="Recent Events">
-                <i class="fas fa-history"></i>
-            </div>
-            <div class="pagination-dot" data-section-id="page4" title="Summary & Insights">
+            <div class="pagination-dot" data-section-id="page2" title="Summary & Insights">
                 <i class="fas fa-brain"></i>
             </div>
         </div>
@@ -47,132 +41,160 @@
                 <p>AI-powered driving pattern analysis and safety scoring</p>
               </div>
               <div class="header-actions">
-                <button class="btn-primary"><i class="fas fa-trophy"></i> View Achievements</button>
+                <button class="btn-primary" id="viewAchievementsBtn"><i class="fas fa-trophy"></i> View Achievements</button>
                 <button class="btn-secondary"><i class="fas fa-file-alt"></i> Generate Report</button>
               </div>
             </div>
-            <div class="score-cards-section">
-              <div class="score-card overall-score">
-                <div class="score-header"><h3>Overall Score</h3></div>
-                <div class="score-display"><div class="score-value">87</div><div class="score-max">/100</div></div>
-                <div class="score-progress"><div class="progress-bar"><div class="progress-fill good" style="width: 87%"></div></div></div>
-                <div class="score-status excellent">Excellent</div>
+            
+            <div class="dashboard-layout-grid">
+              <!-- Score Cards Section -->
+              <div class="score-cards-section">
+                <div class="score-card overall-score">
+                  <div class="score-header"><h3>Overall Score</h3></div>
+                  <div class="score-display"><div class="score-value" id="overall-score-value">...</div><div class="score-max">/100</div></div>
+                  <div class="score-progress"><div class="progress-bar"><div class="progress-fill" id="overall-score-progress"></div></div></div>
+                  <div class="score-status" id="overall-score-status">...</div>
+                </div>
+                <div class="score-card speed-control">
+                  <div class="score-header"><h3>Speed Control</h3></div>
+                  <div class="score-display"><div class="score-value" id="speed-control-value">...</div><div class="score-max">/100</div></div>
+                  <div class="score-progress"><div class="progress-bar"><div class="progress-fill" id="speed-control-progress"></div></div></div>
+                  <div class="score-status" id="speed-control-status">...</div>
+                </div>
+                <div class="score-card eco-score">
+                  <div class="score-header"><h3>Eco Score</h3></div>
+                  <div class="score-display"><div class="score-value" id="eco-score-value">...</div><div class="score-max">/100</div></div>
+                  <div class="score-progress"><div class="progress-bar"><div class="progress-fill" id="eco-score-progress"></div></div></div>
+                  <div class="score-status" id="eco-score-status">...</div>
+                </div>
               </div>
-              <div class="score-card speed-control">
-                <div class="score-header"><h3>Speed Control</h3></div>
-                <div class="score-display"><div class="score-value">82</div><div class="score-max">/100</div></div>
-                <div class="score-progress"><div class="progress-bar"><div class="progress-fill warning" style="width: 82%"></div></div></div>
-                <div class="score-status good">Good</div>
+
+              <!-- Metrics Breakdown Section -->
+              <div class="metrics-breakdown-section">
+                <div class="section-header"><h3>Driving Metrics Breakdown</h3></div>
+                <div class="metrics-grid">
+                  <div class="metric-row-2-items">
+                    <div class="metric-item acceleration">
+                      <div class="metric-label">Acceleration</div>
+                      <div class="metric-bar"><div class="progress-bar"><div class="progress-fill" id="acceleration-progress"></div></div><div class="metric-score" id="acceleration-score">...</div></div>
+                    </div>
+                    <div class="metric-item cornering">
+                      <div class="metric-label">Cornering</div>
+                      <div class="metric-bar"><div class="progress-bar"><div class="progress-fill" id="cornering-progress"></div></div><div class="metric-score" id="cornering-score">...</div></div>
+                    </div>
+                  </div>
+                  <div class="metric-row-2-items">
+                    <div class="metric-item braking">
+                      <div class="metric-label">Braking</div>
+                      <div class="metric-bar"><div class="progress-bar"><div class="progress-fill" id="braking-progress"></div></div><div class="metric-score" id="braking-score">...</div></div>
+                    </div>
+                    <div class="metric-item smooth-driving">
+                      <div class="metric-label">Smooth Driving</div>
+                      <div class="metric-bar"><div class="progress-bar"><div class="progress-fill" id="smooth-driving-progress"></div></div><div class="metric-score" id="smooth-driving-score">...</div></div>
+                    </div>
+                  </div>
+                  <div class="metric-row-4-items">
+                    <div class="metric-item event-metric">
+                      <div class="event-metric-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                      <div class="event-metric-details">
+                        <div class="event-number" id="hard-braking-count">...</div>
+                        <div class="metric-label">Hard Braking</div>
+                      </div>
+                    </div>
+                    <div class="metric-item event-metric">
+                      <div class="event-metric-icon"><i class="fas fa-rocket"></i></div>
+                      <div class="event-metric-details">
+                        <div class="event-number" id="rapid-accel-count">...</div>
+                        <div class="metric-label">Rapid Accel.</div>
+                      </div>
+                    </div>
+                    <div class="metric-item event-metric">
+                      <div class="event-metric-icon"><i class="fas fa-undo-alt"></i></div>
+                      <div class="event-metric-details">
+                        <div class="event-number" id="sharp-turns-count">...</div>
+                        <div class="metric-label">Sharp Turns</div>
+                      </div>
+                    </div>
+                    <div class="metric-item event-metric">
+                      <div class="event-metric-icon"><i class="fas fa-tachometer-alt"></i></div>
+                      <div class="event-metric-details">
+                        <div class="event-number" id="speeding-count">...</div>
+                        <div class="metric-label">Speeding</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="score-card eco-score">
-                <div class="score-header"><h3>Eco Score</h3></div>
-                <div class="score-display"><div class="score-value">92</div><div class="score-max">/100</div></div>
-                <div class="score-progress"><div class="progress-bar"><div class="progress-fill excellent" style="width: 92%"></div></div></div>
-                <div class="score-status excellent">Excellent</div>
+              
+              <!-- Events Section -->
+              <div class="events-section">
+                <div class="section-header"><h3><i class="fas fa-clock"></i> Recent Driving Events</h3></div>
+                <div class="events-timeline" id="events-timeline">
+                  <!-- Event items will be dynamically inserted here -->
+                </div>
               </div>
             </div>
           </div>
         </section>
 
+        <!-- Page 2: Summary & Insights -->
         <section class="page-section" id="page2">
-          <div class="page-content-wrapper">
-            <div class="metrics-breakdown-section">
-              <div class="section-header"><h3>Driving Metrics Breakdown</h3></div>
-              <div class="metrics-grid">
-                <div class="metric-item acceleration">
-                  <div class="metric-label">Acceleration</div>
-                  <div class="metric-bar"><div class="progress-bar"><div class="progress-fill excellent" style="width: 91%"></div></div><div class="metric-score">91</div></div>
-                </div>
-                <div class="metric-item cornering">
-                  <div class="metric-label">Cornering</div>
-                  <div class="metric-bar"><div class="progress-bar"><div class="progress-fill excellent" style="width: 89%"></div></div><div class="metric-score">89</div></div>
-                </div>
-                <div class="metric-item braking">
-                  <div class="metric-label">Braking</div>
-                  <div class="metric-bar"><div class="progress-bar"><div class="progress-fill warning" style="width: 76%"></div></div><div class="metric-score">76</div></div>
-                </div>
-                <div class="metric-item smooth-driving">
-                  <div class="metric-label">Smooth Driving</div>
-                  <div class="metric-bar"><div class="progress-bar"><div class="progress-fill good" style="width: 78%"></div></div><div class="metric-score">78</div></div>
-                </div>
-                <div class="metric-item hard-braking">
-                  <div class="metric-label">Hard Braking Events</div>
-                  <div class="metric-event-count"><div class="event-number">12</div><div class="event-period">This Week</div></div>
-                </div>
-                <div class="metric-item rapid-acceleration">
-                  <div class="metric-label">Rapid Acceleration</div>
-                  <div class="metric-event-count"><div class="event-number">8</div><div class="event-period">This Week</div></div>
-                </div>
-                <div class="metric-item sharp-turns">
-                  <div class="metric-label">Sharp Turns</div>
-                  <div class="metric-event-count"><div class="event-number">15</div><div class="event-period">This Week</div></div>
-                </div>
-                <div class="metric-item speeding-events">
-                  <div class="metric-label">Speeding Events</div>
-                  <div class="metric-event-count"><div class="event-number">3</div><div class="event-period">This Week</div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="page-section" id="page3">
-          <div class="page-content-wrapper">
-            <div class="events-section">
-              <div class="section-header"><h3><i class="fas fa-clock"></i> Recent Driving Events</h3></div>
-              <div class="events-timeline">
-                <div class="event-item warning"><div class="event-time">16:42</div><div class="event-description">Sudden braking detected</div><div class="event-location">Main St at 5th Ave</div><div class="event-badge warning">Alert</div></div>
-                <div class="event-item warning"><div class="event-time">14:25</div><div class="event-description">Heavy right turn at moderate speed</div><div class="event-location">Highway 101 Exit Ramp</div><div class="event-badge warning">Alert</div></div>
-                <div class="event-item good"><div class="event-time">14:08</div><div class="event-description">Excellent highway driving for 15 minutes</div><div class="event-location">Highway 101 - Mile 45</div><div class="event-badge good">Good</div></div>
-                <div class="event-item warning"><div class="event-time">14:15</div><div class="event-description">Quick acceleration from stop</div><div class="event-location">Pine Street at Oak Ave</div><div class="event-badge warning">Alert</div></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="page-section" id="page4">
           <div class="page-content-wrapper summary-insights-grid">
             <div class="sidebar-column">
               <div class="sidebar-panel today-summary">
                 <div class="panel-header"><h3>Today's Summary</h3></div>
                 <div class="summary-stats">
-                  <div class="summary-item"><div class="summary-label">Driving Score</div><div class="summary-value good">87/100</div></div>
-                  <div class="summary-item"><div class="summary-label">Distance</div><div class="summary-value">42.5 miles</div></div>
-                  <div class="summary-item"><div class="summary-label">Drive Time</div><div class="summary-value">1h 25m</div></div>
-                  <div class="summary-item"><div class="summary-label">Avg Speed</div><div class="summary-value">35 mph</div></div>
-                  <div class="summary-item"><div class="summary-label">Fuel Efficiency</div><div class="summary-value excellent">+8% above avg</div></div>
+                  <div class="summary-item"><div class="summary-label">Driving Score</div><div class="summary-value" id="summary-score">...</div></div>
+                  <div class="summary-item"><div class="summary-label">Distance</div><div class="summary-value" id="summary-distance">...</div></div>
+                  <div class="summary-item"><div class="summary-label">Drive Time</div><div class="summary-value" id="summary-drivetime">...</div></div>
+                  <div class="summary-item"><div class="summary-label">Avg Speed</div><div class="summary-value" id="summary-avgspeed">...</div></div>
+                  <div class="summary-item"><div class="summary-label">Fuel Efficiency</div><div class="summary-value" id="summary-fuel">...</div></div>
                 </div>
               </div>
               <div class="sidebar-panel weekly-trends">
                 <div class="panel-header"><h3>Weekly Trends</h3></div>
                 <div class="trends-stats">
-                  <div class="trend-item"><div class="trend-label">Score Trend</div><div class="trend-value improvement">+2.2</div></div>
-                  <div class="trend-item"><div class="trend-label">Best Day</div><div class="trend-value">Tuesday (94)</div></div>
-                  <div class="trend-item"><div class="trend-label">Improvement</div><div class="trend-value improvement">Braking +15%</div></div>
+                  <div class="trend-item"><div class="trend-label">Score Trend</div><div class="trend-value" id="trend-score">...</div></div>
+                  <div class="trend-item"><div class="trend-label">Best Day</div><div class="trend-value" id="trend-best-day">...</div></div>
+                  <div class="trend-item"><div class="trend-label">Improvement</div><div class="trend-value" id="trend-improvement">...</div></div>
                 </div>
               </div>
             </div>
             <div class="sidebar-column">
               <div class="sidebar-panel achievement">
                 <div class="panel-header achievement-header"><h3><i class="fas fa-trophy"></i> Achievement Unlocked!</h3></div>
-                <div class="achievement-content"><div class="achievement-icon"><i class="fas fa-medal"></i></div><div class="achievement-text"><h4>Smooth Operator</h4><p>25 days of excellent driving without harsh events</p></div></div>
+                <div class="achievement-content">
+                    <div class="achievement-icon"><i class="fas fa-medal"></i></div>
+                    <div class="achievement-text">
+                        <h4 id="achievement-title">...</h4>
+                        <p id="achievement-description">...</p>
+                    </div>
+                </div>
               </div>
               <div class="sidebar-panel improvement-tips">
                 <div class="panel-header"><h3>Improvement Tips</h3></div>
-                <div class="tips-content">
-                  <div class="tip-item"><div class="tip-icon warning"><i class="fas fa-exclamation-triangle"></i></div><div class="tip-text"><h4>Braking Focus</h4><p>Try leaving more distance to improve your braking score by 15%.</p></div></div>
-                  <div class="tip-item"><div class="tip-icon good"><i class="fas fa-leaf"></i></div><div class="tip-text"><h4>Speed Consistency</h4><p>Maintain steady speeds to boost fuel efficiency.</p></div></div>
+                <div class="tips-content" id="tips-content">
+                  <!-- Tips will be dynamically inserted here -->
                 </div>
               </div>
               <div class="sidebar-panel goals">
                 <div class="panel-header"><h3>Goals</h3></div>
-                <div class="goal-item"><div class="goal-label">Monthly Target</div><div class="goal-progress"><div class="progress-bar"><div class="progress-fill good" style="width: 86%"></div></div><div class="goal-text">90+ Score</div></div><div class="goal-status">5 points to go</div></div>
+                <div class="goal-item">
+                    <div class="goal-label">Monthly Target</div>
+                    <div class="goal-progress">
+                        <div class="progress-bar"><div class="progress-fill good" id="goal-progress-bar"></div></div>
+                        <div class="goal-text" id="goal-text">...</div>
+                    </div>
+                    <div class="goal-status" id="goal-status">...</div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-      </div> </div> </main>
+      </div>
+    </div>
+  </main>
 
   <div id="chatbot-placeholder"></div>
   <script src="/preloader/preloader.js"></script>

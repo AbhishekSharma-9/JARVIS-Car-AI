@@ -13,12 +13,10 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favico-icon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favico-icon/favicon-16x16.png">
     <link rel="manifest" href="/favico-icon/site.webmanifest">
-    
 </head>
 <body>
     <header id="header-placeholder"></header>
     <div id="google_translate_element" style="display:none;"></div>
-
     <main class="main-content page-content">
         <div class="settings-container">
             <div class="section-header">
@@ -54,41 +52,32 @@
                     <h3>Notifications</h3>
                     <div class="setting-item">
                         <label for="maintenance-alerts">Maintenance Alerts</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="maintenance-alerts" checked>
-                            <label for="maintenance-alerts"></label>
-                        </div>
+                        <div class="toggle-switch"><input type="checkbox" id="maintenance-alerts" checked><label for="maintenance-alerts"></label></div>
                     </div>
                     <div class="setting-item">
                         <label for="safety-warnings">Safety Warnings</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="safety-warnings" checked>
-                            <label for="safety-warnings"></label>
-                        </div>
+                        <div class="toggle-switch"><input type="checkbox" id="safety-warnings" checked><label for="safety-warnings"></label></div>
                     </div>
                     <div class="setting-item">
                         <label for="performance-updates">Performance Updates</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="performance-updates">
-                            <label for="performance-updates"></label>
-                        </div>
+                        <div class="toggle-switch"><input type="checkbox" id="performance-updates"><label for="performance-updates"></label></div>
                     </div>
                 </div>
                 <div class="settings-card">
                     <h3>AI Assistant</h3>
                     <div class="setting-item">
                         <label for="voice-commands">Voice Commands</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="voice-commands" checked>
-                            <label for="voice-commands"></label>
-                        </div>
+                        <div class="toggle-switch"><input type="checkbox" id="voice-commands" checked><label for="voice-commands"></label></div>
+                    </div>
+                    <div class="setting-item">
+                        <label for="ai-voice-select">AI Voice</label>
+                        <select id="ai-voice-select" class="setting-select">
+                            <option value="default">Default</option>
+                            </select>
                     </div>
                     <div class="setting-item">
                         <label for="auto-response">Auto-Response</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="auto-response">
-                            <label for="auto-response"></label>
-                        </div>
+                        <div class="toggle-switch"><input type="checkbox" id="auto-response"><label for="auto-response"></label></div>
                     </div>
                 </div>
                 <div class="settings-card">
@@ -103,10 +92,7 @@
                     </div>
                     <div class="setting-item">
                         <label for="location-services">Location Services</label>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="location-services" checked>
-                            <label for="location-services"></label>
-                        </div>
+                        <div class="toggle-switch"><input type="checkbox" id="location-services" checked><label for="location-services"></label></div>
                     </div>
                 </div>
             </div>
@@ -116,14 +102,10 @@
             </div>
         </div>
     </main>
-
     <div id="chatbot-placeholder"></div>
-    
     <div id="google_translate_element" style="display:none;"></div>
     <script src="/preloader/preloader.js"></script>
     <script src="/js/settings.js"></script>
-    
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
 </body>
 </html>

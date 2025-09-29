@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // First load shared components
     loadSharedComponents().then(() => {
-        // Then initialize our page functionality
         initializePage();
     }).catch(error => {
         console.error('Initialization error:', error);
@@ -10,27 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadSharedComponents() {
     try {
-        // Load Header
         const headerPlaceholder = document.getElementById('header-placeholder');
         if (headerPlaceholder) {
             const headerResponse = await fetch('/header/header.html');
             if (!headerResponse.ok) throw new Error('Header load failed');
             headerPlaceholder.innerHTML = await headerResponse.text();
             
-            // Load header script
             const headerScript = document.createElement('script');
             headerScript.src = '/header/header.js';
             document.body.appendChild(headerScript);
         }
 
-        // Load Chatbot
         const chatbotPlaceholder = document.getElementById('chatbot-placeholder');
         if (chatbotPlaceholder) {
             const chatbotResponse = await fetch('/chatbot/chatbot.html');
             if (!chatbotResponse.ok) throw new Error('Chatbot load failed');
             chatbotPlaceholder.innerHTML = await chatbotResponse.text();
             
-            // Load chatbot script
             const chatbotScript = document.createElement('script');
             chatbotScript.src = '/chatbot/chatbot.js';
             document.body.appendChild(chatbotScript);
@@ -41,143 +35,212 @@ async function loadSharedComponents() {
     }
 }
 
+let monitoringInterval;
+let isCameraOn = false;
+
+// --- FIX: Corrected the typo in the IP address ---
+const alarmSoundSrc = 'http://127.0.0.1:5000/sounds/alarm.mp3';
+const silentSoundSrc = 'http://127.0.0.1:5000/sounds/silent.mp3';
+
+let audioPlayer; 
+let isAlarming = false; 
+
+let isVideoFeedLoaded = false;
+
 function initializePage() {
-    startDriverMonitoringSimulation();
     setupCameraToggle();
-    
-    // Verify theme is working
+    try {
+        audioPlayer = new Audio(silentSoundSrc);
+        audioPlayer.loop = true;
+    } catch (e) {
+        console.error("Could not create alarm sound object.", e);
+    }
     document.addEventListener('themeChanged', (e) => {
         console.log('Theme changed to:', e.detail.theme);
     });
 }
 
-let monitoringInterval;
-let isCameraOn = true;
-
 function setupCameraToggle() {
     const toggleBtn = document.getElementById('camera-toggle');
     const cameraPreview = document.querySelector('.camera-preview');
     const cameraStatus = document.querySelector('.camera-status');
+    const videoFeed = document.getElementById('video-feed'); 
     
-    if (!toggleBtn || !cameraPreview || !cameraStatus) return;
+    if (!toggleBtn || !cameraPreview || !cameraStatus || !videoFeed) return;
 
+    videoFeed.onload = () => {
+        // Only consider the feed loaded if it's not the placeholder image
+        if (videoFeed.src.includes('video_feed')) {
+            isVideoFeedLoaded = true;
+            console.log("Video feed is now live and visible. Alarms are enabled.");
+        }
+    };
+
+    cameraStatus.textContent = 'OFF';
+    cameraPreview.classList.add('off');
+    toggleBtn.innerHTML = '<i class="fas fa-power-off"></i> Turn On';
+    toggleBtn.style.backgroundColor = 'var(--accent-green)';
+    
     toggleBtn.addEventListener('click', () => {
         isCameraOn = !isCameraOn;
         
         if (isCameraOn) {
-            // Camera ON
+            isVideoFeedLoaded = false;
+            
+            if (audioPlayer) {
+                audioPlayer.play().catch(e => console.error("Audio could not be started:", e));
+            }
+
             cameraPreview.classList.remove('off');
             cameraStatus.textContent = 'LIVE';
             cameraStatus.style.backgroundColor = 'var(--accent-red)';
             toggleBtn.innerHTML = '<i class="fas fa-power-off"></i> Turn Off';
             toggleBtn.style.backgroundColor = 'var(--accent-red)';
-            
-            // Update stats
-            updateSimulatedData();
-            
+            videoFeed.src = 'http://127.0.0.1:5000/video_feed';
+            startMonitoring();
             addAlert('good', 'Camera Activated', 'Camera is now active', 'Just now');
         } else {
-            // Camera OFF
+            isVideoFeedLoaded = false;
+            
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer.src = silentSoundSrc;
+            }
+            isAlarming = false;
+            
             cameraPreview.classList.add('off');
             cameraStatus.textContent = 'OFF';
             cameraStatus.style.backgroundColor = '#666';
             toggleBtn.innerHTML = '<i class="fas fa-power-off"></i> Turn On';
             toggleBtn.style.backgroundColor = 'var(--accent-green)';
             
-            // Clear stats
-            updateStat(document.getElementById('attention-level-value'), '-', 100, 75, 50, true);
-            updateStat(document.getElementById('eye-closure-value'), '-', 100, 70, 40, true);
-            updateStat(document.getElementById('head-position-value'), '-', 100, 70, 40, true);
+            // ==============================================================================
+            // FIX: Add a unique timestamp to the image src to force the browser to reload it
+            // This prevents caching issues when switching from a video stream.
+            // ==============================================================================
+            videoFeed.src = '../monitor.png?t=' + new Date().getTime();
+
+            stopMonitoring();
+            
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.textContent = '-';
+                el.className = 'stat-value status-off';
+            });
             
             addAlert('warning', 'Camera Deactivated', 'Camera is turned off', 'Just now');
         }
     });
 }
 
-function startDriverMonitoringSimulation() {
+function startMonitoring() {
     addAlert('good', 'System Initialized', 'Driver monitoring is now active.', 'Just now');
-
-    // Stop any previous interval to prevent duplicates
-    if (monitoringInterval) {
-        clearInterval(monitoringInterval);
-    }
-
-    monitoringInterval = setInterval(updateSimulatedData, 3500);
+    if (monitoringInterval) clearInterval(monitoringInterval);
+    monitoringInterval = setInterval(fetchModelResults, 500);
 }
 
-function updateSimulatedData() {
+function stopMonitoring() {
+    if (monitoringInterval) clearInterval(monitoringInterval);
+    handleAlarm('none');
+}
+
+async function fetchModelResults() {
     if (!isCameraOn) return;
-
-    const elements = {
-        attentionValue: document.getElementById('attention-level-value'),
-        eyeValue: document.getElementById('eye-closure-value'),
-        headValue: document.getElementById('head-position-value')
-    };
-        
-    // Simulate data fluctuations
-    let attentionLevel = 85 + Math.floor(Math.random() * 15);
-    let eyeStatus = 'Normal';
-    let headStatus = 'Centered';
-    let newAlert = null;
-
-    const randomFactor = Math.random();
-
-    if (randomFactor < 0.15 && randomFactor >= 0.05) {
-        attentionLevel = 60 + Math.floor(Math.random() * 15);
-        eyeStatus = 'Brief Closure';
-        newAlert = { type: 'warning', strong: 'Slight Drowsiness', p: 'Brief eye closure detected.' };
-    } else if (randomFactor < 0.05 && randomFactor >= 0.02) {
-        attentionLevel = 70 + Math.floor(Math.random() * 10);
-        headStatus = 'Off-center';
-        newAlert = { type: 'warning', strong: 'Distraction Detected', p: 'Head position off-center.' };
-    } else if (randomFactor < 0.02) {
-        attentionLevel = 35 + Math.floor(Math.random() * 15);
-        eyeStatus = 'Prolonged Closure';
-        headStatus = 'Slumped';
-        newAlert = { type: 'critical', strong: 'Severe Drowsiness', p: 'Take a break immediately!' };
-    }
-    
-    // Update UI Elements
-    updateStat(elements.attentionValue, `${attentionLevel}%`, attentionLevel, 75, 50);
-    updateStat(elements.eyeValue, eyeStatus, eyeStatus === 'Normal' ? 100 : (eyeStatus === 'Brief Closure' ? 60 : 30), 70, 40);
-    updateStat(elements.headValue, headStatus, headStatus === 'Centered' ? 100 : (headStatus === 'Off-center' ? 60 : 30), 70, 40);
-
-    if (newAlert) {
-        addAlert(newAlert.type, newAlert.strong, newAlert.p, 'Just now');
+    try {
+        const response = await fetch('http://127.0.0.1:5000/results');
+        if (!response.ok) throw new Error('Failed to fetch model results');
+        const data = await response.json();
+        updateUI(data);
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
 }
 
-
-function updateStat(element, text, value, warn, crit, isOff = false) {
-    if (!element) return;
-    element.textContent = text;
-    element.className = 'stat-value'; // Reset classes
-
-    if (isOff) {
-        element.classList.add('status-off');
+function handleAlarm(alarmState) {
+    if (!isVideoFeedLoaded) {
+        document.body.classList.remove('flashing-critical', 'flashing-warning');
         return;
     }
 
-    if (value <= crit) {
-        element.classList.add('status-critical');
-    } else if (value <= warn) {
-        element.classList.add('status-warning');
-    } else {
-        element.classList.add('status-good');
+    if (!audioPlayer) return;
+
+    document.body.classList.remove('flashing-critical', 'flashing-warning');
+
+    const shouldBeAlarming = alarmState !== 'none';
+
+    if (shouldBeAlarming !== isAlarming) {
+        isAlarming = shouldBeAlarming;
+        if (isAlarming) {
+            audioPlayer.src = alarmSoundSrc;
+            console.log("ALARM ON: Switched to alarm.mp3");
+        } else {
+            audioPlayer.src = silentSoundSrc;
+            console.log("ALARM OFF: Switched to silent.mp3");
+        }
+        audioPlayer.play().catch(e => console.error("Error resuming playback:", e));
+    }
+
+    if (isAlarming) {
+        if (alarmState === 'drowsy_alarm' || alarmState === 'emotion_alarm') {
+            document.body.classList.add('flashing-critical');
+        } else {
+            document.body.classList.add('flashing-warning');
+        }
     }
 }
 
+function updateUI(data) {
+    // This function remains unchanged
+    updateStat(
+        document.getElementById('drowsiness-state-value'),
+        data.drowsiness_state,
+        data.drowsiness_state === 'Drowsy' ? 'critical' : 'good'
+    );
+    updateStat(
+        document.getElementById('mood-value'),
+        data.mood,
+        data.mood === 'sad' || data.mood === 'angry' ? 'critical' : 'good'
+    );
+    updateStat(
+        document.getElementById('head-position-value'),
+        data.head_position,
+        data.head_position !== 'Centered' ? 'warning' : 'good'
+    );
+    updateStat(
+        document.getElementById('behavior-value'),
+        data.behavior,
+        data.behavior !== 'Normal' ? 'warning' : 'good'
+    );
+
+    handleAlarm(data.alarm_state);
+
+    if (data.drowsiness_state === 'Drowsy') {
+        addAlert('critical', 'Severe Drowsiness Detected!', 'Please take a break. Your drowsiness is at a critical level.', 'Just now');
+    }
+    if (data.behavior === 'Distracted') {
+        addAlert('warning', 'Distracted Driving!', 'A cell phone has been detected.', 'Just now');
+    }
+}
+
+function updateStat(element, text, status) {
+    // This function remains unchanged
+    if (!element) return;
+    element.textContent = text;
+    element.className = 'stat-value';
+    if (status === 'good') element.classList.add('status-good');
+    else if (status === 'warning') element.classList.add('status-warning');
+    else if (status === 'critical') element.classList.add('status-critical');
+    else if (status === true) element.classList.add('status-off');
+}
+
 function addAlert(type, strongText, pText, smallText) {
+    // This function remains unchanged
     const alertList = document.getElementById('alert-list');
     if (!alertList) return;
-
     const alertItem = document.createElement('div');
     alertItem.className = `alert-item ${type}`;
-    
     let iconClass = 'fas fa-check-circle';
     if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
     if (type === 'critical') iconClass = 'fas fa-skull-crossbones';
-
     alertItem.innerHTML = `
         <i class="${iconClass}"></i>
         <div>
@@ -186,23 +249,16 @@ function addAlert(type, strongText, pText, smallText) {
             <small>${smallText}</small>
         </div>
     `;
-    
     alertList.prepend(alertItem);
-
-    while (alertList.children.length > 8) {
+    if (alertList.children.length > 8) {
         alertList.removeChild(alertList.lastChild);
     }
 }
 
 window.addEventListener('beforeunload', () => {
-    if (monitoringInterval) {
-        clearInterval(monitoringInterval);
-    }
+    stopMonitoring();
 });
 
 function googleTranslateElementInit() {
-    new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        autoDisplay: false
-    }, 'google_translate_element');
+    new google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false }, 'google_translate_element');
 }

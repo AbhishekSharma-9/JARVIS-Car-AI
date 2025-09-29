@@ -13,7 +13,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favico-icon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favico-icon/favicon-16x16.png">
     <link rel="manifest" href="/favico-icon/site.webmanifest">
-    
 </head>
 <body>
     <header id="header-placeholder"></header>
@@ -28,6 +27,22 @@
             <div class="companion-interface">
                 <div class="voice-ui-card">
                     <h3>Voice Interface</h3>
+                    
+                    <div class="language-selector">
+                        <label for="language-select">Language:</label>
+                        <select id="language-select">
+                            <option value="en-US">English</option>
+                            <option value="hi-IN">हिन्दी (Hindi)</option>
+                            <option value="bn-IN">বাংলা (Bengali)</option>
+                            <option value="or-IN">ଓଡ଼ିଆ (Odia)</option>
+                            <option value="ta-IN">தமிழ் (Tamil)</option>
+                            <option value="ml-IN">മലയാളം (Malayalam)</option>
+                            <option value="es-ES">Español (Spanish)</option>
+                            <option value="fr-FR">Français (French)</option>
+                            <option value="de-DE">Deutsch (German)</option>
+                        </select>
+                    </div>
+
                     <div class="voice-visualizer">
                         <div class="voice-wave"></div>
                         <div class="voice-wave"></div>
@@ -35,10 +50,19 @@
                         <div class="voice-wave"></div>
                         <div class="voice-wave"></div>
                     </div>
-                    <button class="voice-button" id="voice-btn">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <div class="voice-status" id="voice-status">Click to speak</div>
+                    
+                    <!-- CORRECTED: Container for the voice control buttons -->
+                    <div class="voice-controls">
+                        <button class="voice-button" id="voice-btn">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <!-- Button to stop the AI's speech -->
+                        <button class="stop-speech-button" id="stop-speech-btn" title="Stop Speaking">
+                            <i class="fas fa-stop-circle"></i>
+                        </button>
+                    </div>
+
+                    <div class="voice-status" id="voice-status">Click to start listening</div>
                 </div>
                 <div class="chat-interface">
                     <div class="chat-header">
@@ -75,3 +99,4 @@
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
+

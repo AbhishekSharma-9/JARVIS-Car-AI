@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensor Integrity - JARVIS Car AI</title>
-    <link rel="stylesheet" href="/css/sensor-integrity.css">
-    <link rel="stylesheet" href="/header/header.css">
-    <link rel="stylesheet" href="/chatbot/chatbot.css">
-    <link rel="stylesheet" href="/preloader/preloader.css">
+    <link href="/header/header.css" rel="stylesheet" type="text/css" />
+    <link href="/chatbot/chatbot.css" rel="stylesheet" type="text/css" />
+    <link href="/css/sensor-integrity.css" rel="stylesheet" type="text/css" />
+    <link href="/preloader/preloader.css" rel="stylesheet" type="text/css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/favico-icon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favico-icon/favicon-32x32.png">
@@ -16,135 +17,162 @@
     <link rel="manifest" href="/favico-icon/site.webmanifest">
 </head>
 <body>
+    <div id="preloader-placeholder"></div>
     <header id="header-placeholder"></header>
     <div id="google_translate_element" style="display:none;"></div>
 
-    <!-- Vertical Pagination Navigation -->
-    <nav class="vertical-pagination">
-        <div class="pagination-dots">
-            <div class="pagination-dot active" data-section="0" title="Overview">
-                <i class="fas fa-tachometer-alt"></i>
-            </div>
-            <div class="pagination-dot" data-section="1" title="Engine Systems">
-                <i class="fas fa-oil-can"></i>
-            </div>
-            <div class="pagination-dot" data-section="2" title="Wheels & Power">
-                <i class="fas fa-car-battery"></i>
-            </div>
-            <div class="pagination-dot" data-section="3" title="Anomaly Detection">
-                <i class="fas fa-wave-square"></i>
-            </div>
-            <div class="pagination-dot" data-section="4" title="AI Insights">
-                <i class="fas fa-brain"></i>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Container with Scroll Snap -->
-    <main class="scroll-container">
-        <!-- Section 0: Dashboard Overview -->
-        <section class="sensor-section overview-section" id="overview" data-section="0">
+    <main class="main-content-area">
+        <section class="sensor-section">
             <div class="section-content">
                 <div class="section-header">
-                    <h1>Sensor Integrity Dashboard</h1>
-                    <p>Real-time sensor monitoring, diagnostics, and AI-powered insights</p>
+                    <h1>Full System Integrity</h1>
+                    <p>Live monitoring of all critical vehicle sensor systems</p>
                 </div>
-                <div class="overview-grid">
-                    <div class="summary-card">
-                        <h4>Overall Sensor Health</h4>
-                        <div class="health-circle">
-                            <div class="circle-progress warning">
-                                <div class="progress-text warning">55%</div>
+                <div class="two-row-grid">
+                    <!-- All cards now use the new detailed structure -->
+                    <div class="sensor-card-detailed" data-sensor-id="engine-oil">
+                        <div class="sensor-card-header">
+                            <div class="sensor-icon-wrapper"><i class="fas fa-oil-can"></i></div>
+                            <div class="sensor-title-section"><h4>Loading...</h4><div class="sensor-location"></div></div>
+                            <div class="sensor-status-badge"><span class="status-dot"></span></div>
+                        </div>
+                        <div class="card-body-grid">
+                            <div class="primary-metric-panel"></div>
+                            <div class="secondary-metrics-panel"></div>
+                        </div>
+                        <div class="chart-section-detailed">
+                            <div class="chart-header">
+                                <span class="chart-title">7-Day Trend</span>
+                                <span class="trend-indicator"></span>
                             </div>
+                            <div class="main-chart-container"><canvas class="main-chart"></canvas></div>
                         </div>
-                        <div class="health-breakdown">
-                            <div class="breakdown-item good"><span>Good Status:</span><span>3 sensors</span></div>
-                            <div class="breakdown-item warning"><span>Needs Attention:</span><span>2 sensors</span></div>
-                            <div class="breakdown-item critical"><span>Critical:</span><span>1 sensor</span></div>
-                        </div>
-                    </div>
-                    <div class="priority-card">
-                        <h4>Priority Actions</h4>
-                        <div class="priority-list">
-                            <div class="priority-item high"><div class="priority-icon critical"><i class="fas fa-exclamation"></i></div><div class="priority-content"><h5>Brake Fluid Service</h5><p>Critical level detected</p></div><div class="priority-time">24h</div></div>
-                            <div class="priority-item medium"><div class="priority-icon warning"><i class="fas fa-wrench"></i></div><div class="priority-content"><h5>Transmission Calibration</h5><p>5% drift detected</p></div><div class="priority-time">2 weeks</div></div>
-                            <div class="priority-item low"><div class="priority-icon good"><i class="fas fa-oil-can"></i></div><div class="priority-content"><h5>Oil Change</h5><p>Scheduled maintenance</p></div><div class="priority-time">1 month</div></div>
+                        <div class="sensor-footer">
+                            <div class="next-action"></div>
+                            <button class="action-btn"></button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 1: Engine Systems -->
-        <section class="sensor-section" id="engine-systems" data-section="1">
-            <div class="section-content">
-                <div class="section-header"><h1>Engine Systems</h1><p>Monitoring engine lubrication, cooling, and transmission</p></div>
-                <div class="three-card-grid">
-                    <div class="sensor-card-modern good"><div class="sensor-card-header"><div class="sensor-icon-wrapper good"><i class="fas fa-oil-can"></i></div><div class="sensor-title-section"><h4>Engine Oil Sensor</h4><div class="sensor-location">Engine Bay • Sector A</div></div><div class="sensor-status-badge good"><span class="status-dot"></span>Excellent</div></div><div class="sensor-metrics-row"><div class="metric-card primary"><div class="metric-value">85%</div><div class="metric-label">Health Score</div></div><div class="metric-card"><div class="metric-value">Normal</div><div class="metric-label">Viscosity</div></div><div class="metric-card"><div class="metric-value">2 days</div><div class="metric-label">Last Check</div></div></div><div class="sensor-chart-section"><div class="chart-header"><span class="chart-title">7-Day Trend</span><span class="trend-indicator stable"><i class="fas fa-arrow-right"></i> Stable</span></div><div class="mini-trend-line"><canvas class="mini-chart"></canvas></div></div><div class="sensor-footer"><div class="next-action"><i class="fas fa-calendar-check"></i><span>Next service in <strong>1 month</strong></span></div><button class="action-btn primary"><i class="fas fa-calendar-plus"></i>Schedule</button></div></div>
-                    <div class="sensor-card-modern good"><div class="sensor-card-header"><div class="sensor-icon-wrapper good"><i class="fas fa-thermometer-half"></i></div><div class="sensor-title-section"><h4>Coolant System</h4><div class="sensor-location">Radiator • Front End</div></div><div class="sensor-status-badge good"><span class="status-dot"></span>Optimal</div></div><div class="sensor-metrics-row"><div class="metric-card primary"><div class="metric-value">92%</div><div class="metric-label">Level</div></div><div class="metric-card"><div class="metric-value">92°C</div><div class="metric-label">Temperature</div></div><div class="metric-card"><div class="metric-value">Live</div><div class="metric-label">Monitoring</div></div></div><div class="sensor-chart-section"><div class="chart-header"><span class="chart-title">Temperature Trend</span><span class="trend-indicator stable"><i class="fas fa-thermometer-half"></i> Normal</span></div><div class="mini-trend-line"><canvas class="mini-chart"></canvas></div></div><div class="sensor-footer"><div class="next-action"><i class="fas fa-eye"></i><span>System flush in <strong>6 months</strong></span></div><button class="action-btn secondary"><i class="fas fa-chart-line"></i>Monitor</button></div></div>
-                    <div class="sensor-card-modern warning"><div class="sensor-card-header"><div class="sensor-icon-wrapper warning"><i class="fas fa-cogs"></i></div><div class="sensor-title-section"><h4>Transmission</h4><div class="sensor-location">Drivetrain • Center</div></div><div class="sensor-status-badge warning"><span class="status-dot"></span>Needs Calibration</div></div><div class="sensor-metrics-row"><div class="metric-card primary warning"><div class="metric-value">75%</div><div class="metric-label">Health Score</div></div><div class="metric-card warning"><div class="metric-value">5%</div><div class="metric-label">Drift</div></div><div class="metric-card"><div class="metric-value">2 weeks</div><div class="metric-label">Rec. Action</div></div></div><div class="sensor-chart-section"><div class="chart-header"><span class="chart-title">Calibration Drift</span><span class="trend-indicator warning"><i class="fas fa-arrow-up"></i> Increasing</span></div><div class="mini-trend-line"><canvas class="mini-chart"></canvas></div></div><div class="sensor-footer"><div class="next-action"><i class="fas fa-wrench"></i><span>Calibration needed in <strong>2 weeks</strong></span></div><button class="action-btn warning"><i class="fas fa-tools"></i>Calibrate</button></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 2: Wheels & Power -->
-        <section class="sensor-section" id="wheels-power" data-section="2">
-            <div class="section-content">
-                 <div class="section-header"><h1>Wheels & Power</h1><p>Braking, electrical, and tire systems monitoring</p></div>
-                <div class="three-card-grid">
-                    <div class="sensor-card-modern critical"><div class="sensor-card-header"><div class="sensor-icon-wrapper critical"><i class="fas fa-exclamation-triangle"></i></div><div class="sensor-title-section"><h4>Brake Fluid System</h4><div class="sensor-location">Brake Lines • All Wheels</div></div><div class="sensor-status-badge critical"><span class="status-dot pulsing"></span>Critical</div></div><div class="sensor-metrics-row"><div class="metric-card primary critical"><div class="metric-value">45%</div><div class="metric-label">Fluid Level</div></div><div class="metric-card critical"><div class="metric-value">2ml/day</div><div class="metric-label">Leak Rate</div></div><div class="metric-card critical"><div class="metric-value">24h</div><div class="metric-label">Time Left</div></div></div><div class="sensor-chart-section"><div class="chart-header"><span class="chart-title">Fluid Level Drop</span><span class="trend-indicator critical"><i class="fas fa-arrow-down"></i> Declining</span></div><div class="mini-trend-line"><canvas class="mini-chart"></canvas></div></div><div class="sensor-footer"><div class="next-action critical"><i class="fas fa-exclamation-triangle"></i><span><strong>URGENT:</strong> Service required within 24h</span></div><button class="action-btn critical pulsing"><i class="fas fa-wrench"></i>Emergency Service</button></div></div>
-                    <div class="sensor-card-modern good"><div class="sensor-card-header"><div class="sensor-icon-wrapper good"><i class="fas fa-battery-three-quarters"></i></div><div class="sensor-title-section"><h4>Battery System</h4><div class="sensor-location">Engine Bay • Right Side</div></div><div class="sensor-status-badge good"><span class="status-dot"></span>Healthy</div></div><div class="sensor-metrics-row"><div class="metric-card primary"><div class="metric-value">94%</div><div class="metric-label">Charge</div></div><div class="metric-card"><div class="metric-value">12.6V</div><div class="metric-label">Voltage</div></div><div class="metric-card"><div class="metric-value">2 years</div><div class="metric-label">Life Left</div></div></div><div class="sensor-chart-section"><div class="chart-header"><span class="chart-title">Voltage History</span><span class="trend-indicator stable"><i class="fas fa-battery-full"></i> Stable</span></div><div class="mini-trend-line"><canvas class="mini-chart"></canvas></div></div><div class="sensor-footer"><div class="next-action"><i class="fas fa-battery-full"></i><span>Next test in <strong>6 months</strong></span></div><button class="action-btn secondary"><i class="fas fa-chart-line"></i>Details</button></div></div>
-                    <div class="sensor-card-modern warning"><div class="sensor-card-header"><div class="sensor-icon-wrapper warning"><i class="fas fa-car"></i></div><div class="sensor-title-section"><h4>Tire Pressure (TPMS)</h4><div class="sensor-location">All Wheels • Monitoring</div></div><div class="sensor-status-badge warning"><span class="status-dot"></span>Low Pressure</div></div><div class="sensor-metrics-row"><div class="metric-card primary warning"><div class="metric-value">28 PSI</div><div class="metric-label">Front Left</div></div><div class="metric-card"><div class="metric-value">32 PSI</div><div class="metric-label">Others</div></div><div class="metric-card"><div class="metric-value">Soon</div><div class="metric-label">Check Due</div></div></div><div class="sensor-chart-section"><div class="chart-header"><span class="chart-title">Pressure Trend</span><span class="trend-indicator warning"><i class="fas fa-arrow-down"></i> Dropping</span></div><div class="mini-trend-line"><canvas class="mini-chart"></canvas></div></div><div class="sensor-footer"><div class="next-action"><i class="fas fa-exclamation-triangle"></i><span>Front left tire needs <strong>air</strong></span></div><button class="action-btn warning"><i class="fas fa-plus"></i>Add Air</button></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 3: Anomaly Detection -->
-        <section class="sensor-section" id="anomaly-detection" data-section="3">
-            <div class="section-content">
-                <div class="section-header"><h1>Anomaly Detection</h1><p>Complete system status and anomaly detection</p></div>
-                <div class="anomaly-heatmap-card"><div class="heatmap-header"><h4><i class="fas fa-chart-area"></i>Sensor Anomaly Detection - Last 7 Days</h4><div class="heatmap-legend"><div class="legend-item"><div class="legend-color normal"></div><span>Normal</span></div><div class="legend-item"><div class="legend-color mild"></div><span>Mild</span></div><div class="legend-item"><div class="legend-color severe"></div><span>Severe</span></div></div></div><div class="heatmap-grid"><div class="heatmap-labels"><span>Engine Oil</span><span>Coolant Level</span><span>Transmission</span><span>Brake Fluid</span><span>Battery</span><span>TPMS</span></div><div class="heatmap-days"><div class="day-column"><div class="day-label">Mon</div><div class="heat-cell normal"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell normal"></div><div class="heat-cell normal"></div></div><div class="day-column"><div class="day-label">Tue</div><div class="heat-cell normal"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell mild"></div><div class="heat-cell normal"></div></div><div class="day-column"><div class="day-label">Wed</div><div class="heat-cell mild"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell normal"></div><div class="heat-cell normal"></div></div><div class="day-column"><div class="day-label">Thu</div><div class="heat-cell normal"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div></div><div class="day-column"><div class="day-label">Fri</div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell normal"></div><div class="heat-cell normal"></div></div><div class="day-column"><div class="day-label">Sat</div><div class="heat-cell normal"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell normal"></div><div class="heat-cell normal"></div></div><div class="day-column"><div class="day-label">Sun</div><div class="heat-cell normal"></div><div class="heat-cell normal"></div><div class="heat-cell mild"></div><div class="heat-cell severe"></div><div class="heat-cell normal"></div><div class="heat-cell normal"></div></div></div></div><div class="anomaly-summary"><div class="summary-stat"><span class="stat-number">24</span><span class="stat-label">Total Anomalies</span></div><div class="summary-stat"><span class="stat-number critical">6</span><span class="stat-label">Critical Issues</span></div><div class="summary-stat"><span class="stat-number positive">94%</span><span class="stat-label">Detection Rate</span></div></div></div>
-            </div>
-        </section>
-        
-        <!-- Section 4: AI Insights -->
-        <section class="sensor-section" id="ai-insights" data-section="4">
-            <div class="section-content">
-                <div class="section-header"><h1>AI-Powered Insights</h1><p>Predictive analytics and actionable recommendations</p></div>
-                <div class="ai-insights-grid">
-                    <div class="ai-insight-card critical"><div class="insight-header"><div class="insight-icon critical"><i class="fas fa-exclamation-triangle"></i></div><span class="insight-priority">High Priority</span><span class="insight-confidence">98% Confidence</span></div><div class="insight-message"><p>Brake fluid leak detected. Correlation with TPMS data suggests potential right-front caliper issue. Immediate service is recommended to prevent brake failure.</p></div><div class="insight-details"><div class="detail-item"><span>Affected Systems:</span><strong>Braking, TPMS</strong></div><div class="detail-item"><span>Risk Level:</span><strong class="critical">Severe</strong></div><div class="detail-item"><span>Recommended Action:</span><strong>Inspect Caliper</strong></div></div><div class="insight-actions"><button class="btn-insight urgent">Service Now</button><button class="btn-insight secondary">View Data</button></div></div>
-                    <div class="ai-insight-card warning"><div class="insight-header"><div class="insight-icon warning"><i class="fas fa-tools"></i></div><span class="insight-priority">Medium Priority</span><span class="insight-confidence">85% Confidence</span></div><div class="insight-message"><p>Transmission fluid viscosity is trending downwards, indicating premature wear. Scheduling a fluid flush within the next 1,000 miles could prevent costly repairs.</p></div><div class="insight-details"><div class="detail-item"><span>Affected Systems:</span><strong>Transmission</strong></div><div class="detail-item"><span>Risk Level:</span><strong>Moderate</strong></div><div class="detail-item"><span>Recommended Action:</span><strong>Fluid Flush</strong></div></div><div class="insight-actions"><button class="btn-insight schedule">Schedule Maintenance</button><button class="btn-insight secondary">Dismiss</button></div></div>
-                    <div class="ai-insight-card positive"><div class="insight-header"><div class="insight-icon positive"><i class="fas fa-check-circle"></i></div><span class="insight-priority">Low Priority</span><span class="insight-confidence">99% Confidence</span></div><div class="insight-message"><p>Engine oil and coolant systems are operating at peak efficiency. Current driving habits are optimal for engine longevity. No action is required at this time.</p></div><div class="insight-details"><div class="detail-item"><span>Affected Systems:</span><strong>Engine, Cooling</strong></div><div class="detail-item"><span>Risk Level:</span><strong class="positive">None</strong></div><div class="detail-item"><span>Recommended Action:</span><strong>Continue Monitoring</strong></div></div><div class="insight-actions"><button class="btn-insight positive">Acknowledge</button></div></div>
+                     <div class="sensor-card-detailed" data-sensor-id="coolant-system">
+                        <div class="sensor-card-header">
+                            <div class="sensor-icon-wrapper"><i class="fas fa-thermometer-half"></i></div>
+                            <div class="sensor-title-section"><h4>Loading...</h4><div class="sensor-location"></div></div>
+                            <div class="sensor-status-badge"><span class="status-dot"></span></div>
+                        </div>
+                        <div class="card-body-grid">
+                            <div class="primary-metric-panel"></div>
+                            <div class="secondary-metrics-panel"></div>
+                        </div>
+                        <div class="chart-section-detailed">
+                            <div class="chart-header">
+                                <span class="chart-title">Temperature Trend</span>
+                                <span class="trend-indicator"></span>
+                            </div>
+                            <div class="main-chart-container"><canvas class="main-chart"></canvas></div>
+                        </div>
+                        <div class="sensor-footer">
+                            <div class="next-action"></div>
+                            <button class="action-btn"></button>
+                        </div>
+                    </div>
+                     <div class="sensor-card-detailed" data-sensor-id="transmission">
+                        <div class="sensor-card-header">
+                            <div class="sensor-icon-wrapper"><i class="fas fa-cogs"></i></div>
+                            <div class="sensor-title-section"><h4>Loading...</h4><div class="sensor-location"></div></div>
+                            <div class="sensor-status-badge"><span class="status-dot"></span></div>
+                        </div>
+                        <div class="card-body-grid">
+                            <div class="primary-metric-panel"></div>
+                            <div class="secondary-metrics-panel"></div>
+                        </div>
+                        <div class="chart-section-detailed">
+                            <div class="chart-header">
+                                <span class="chart-title">Calibration Drift</span>
+                                <span class="trend-indicator"></span>
+                            </div>
+                            <div class="main-chart-container"><canvas class="main-chart"></canvas></div>
+                        </div>
+                        <div class="sensor-footer">
+                            <div class="next-action"></div>
+                            <button class="action-btn"></button>
+                        </div>
+                    </div>
+                     <div class="sensor-card-detailed" data-sensor-id="brake-fluid">
+                        <div class="sensor-card-header">
+                            <div class="sensor-icon-wrapper"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="sensor-title-section"><h4>Loading...</h4><div class="sensor-location"></div></div>
+                            <div class="sensor-status-badge"><span class="status-dot"></span></div>
+                        </div>
+                        <div class="card-body-grid">
+                            <div class="primary-metric-panel"></div>
+                            <div class="secondary-metrics-panel"></div>
+                        </div>
+                        <div class="chart-section-detailed">
+                             <div class="chart-header">
+                                <span class="chart-title">Fluid Level Trend</span>
+                                <span class="trend-indicator"></span>
+                            </div>
+                            <div class="main-chart-container"><canvas class="main-chart"></canvas></div>
+                        </div>
+                        <div class="sensor-footer">
+                            <div class="next-action"></div>
+                            <button class="action-btn"></button>
+                        </div>
+                    </div>
+                     <div class="sensor-card-detailed" data-sensor-id="battery-system">
+                        <div class="sensor-card-header">
+                            <div class="sensor-icon-wrapper"><i class="fas fa-battery-three-quarters"></i></div>
+                            <div class="sensor-title-section"><h4>Loading...</h4><div class="sensor-location"></div></div>
+                            <div class="sensor-status-badge"><span class="status-dot"></span></div>
+                        </div>
+                        <div class="card-body-grid">
+                            <div class="primary-metric-panel"></div>
+                            <div class="secondary-metrics-panel"></div>
+                        </div>
+                        <div class="chart-section-detailed">
+                             <div class="chart-header">
+                                <span class="chart-title">Voltage Stability</span>
+                                <span class="trend-indicator"></span>
+                            </div>
+                            <div class="main-chart-container"><canvas class="main-chart"></canvas></div>
+                        </div>
+                        <div class="sensor-footer">
+                            <div class="next-action"></div>
+                            <button class="action-btn"></button>
+                        </div>
+                    </div>
+                     <div class="sensor-card-detailed" data-sensor-id="tpms">
+                        <div class="sensor-card-header">
+                            <div class="sensor-icon-wrapper"><i class="fas fa-car-side"></i></div>
+                            <div class="sensor-title-section"><h4>Loading...</h4><div class="sensor-location"></div></div>
+                            <div class="sensor-status-badge"><span class="status-dot"></span></div>
+                        </div>
+                        <div class="card-body-grid">
+                            <div class="primary-metric-panel"></div>
+                            <div class="secondary-metrics-panel"></div>
+                        </div>
+                        <div class="chart-section-detailed">
+                            <div class="chart-header">
+                                <span class="chart-title">Pressure Trend</span>
+                                <span class="trend-indicator"></span>
+                            </div>
+                            <div class="main-chart-container"><canvas class="main-chart"></canvas></div>
+                        </div>
+                        <div class="sensor-footer">
+                            <div class="next-action"></div>
+                            <button class="action-btn"></button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
+
+    <div id="chatbot-placeholder"></div>
     
-    <!-- Chatbot (Embedded directly) -->
-    <div class="chatbot-float">
-        <div class="chatbot-widget" id="chatbot-widget">
-            <div class="chatbot-header">
-                <h4>JARVIS Assistant</h4>
-                <button class="chatbot-close" id="chatbot-close">×</button>
-            </div>
-            <div class="chatbot-messages" id="chatbot-messages">
-                <div class="chatbot-message bot">
-                    <i class="fas fa-robot"></i>
-                    <div>Hello! I'm JARVIS, your automotive AI assistant. How can I help you today?</div>
-                </div>
-            </div>
-            <div class="chatbot-input-area">
-                <input type="text" id="chatbot-input" placeholder="Ask me anything about your vehicle...">
-                <button id="chatbot-send"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-        <button class="chatbot-toggle" id="chatbot-toggle">
-            <i class="fas fa-robot"></i>
-        </button>
-    </div>
     <script src="/preloader/preloader.js"></script>
+    <script src="/js/index.js"></script> 
     <script src="/js/sensor-integrity.js"></script>
-    <script src="/chatbot/chatbot.js"></script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
+

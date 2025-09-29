@@ -106,310 +106,75 @@ function initializeMobileMenu() {
     }
 }
 
-
-// Advanced Predictive Maintenance JavaScript
+// Real-time Data Fetching and Chart Updates
 class PredictiveMaintenance {
     constructor() {
-        this.selectedComponent = null;
-        this.components = {
-            brakes: {
-                name: 'Brake System',
-                health: 45,
-                days: 14,
-                miles: 1200,
-                rul: '2 weeks',
-                impact: 'Hard braking detected → 15% faster wear',
-                confidence: {total: 92, obd: 45, history: 25, behavior: 22},
-                history: [85, 80, 75, 68, 60, 45],
-                costs: {now: 280, later: 650},
-                maintenance: ['Brake pad thickness: 2.8mm', 'Brake fluid: Good', 'Rotor condition: Fair'],
-                sensors: ['Brake pad sensor', 'ABS sensor', 'Brake fluid level'],
-                recommendations: ['Replace brake pads immediately', 'Check brake fluid', 'Inspect rotors']
-            },
-            engine: {
-                name: 'Engine',
-                health: 85,
-                days: 45,
-                miles: 3500,
-                rul: '6 weeks',
-                impact: 'Aggressive acceleration → Oil degradation 8% faster',
-                confidence: {total: 87, obd: 55, history: 20, behavior: 12},
-                history: [95, 92, 90, 88, 86, 85],
-                costs: {now: 150, later: 380},
-                maintenance: ['Oil life: 15%', 'Air filter: Good', 'Spark plugs: Fair'],
-                sensors: ['Oil life sensor', 'Temperature sensor', 'O2 sensor'],
-                recommendations: ['Schedule oil change', 'Replace air filter', 'Check spark plugs']
-            },
-            transmission: {
-                name: 'Transmission',
-                health: 92,
-                days: 120,
-                miles: 8500,
-                rul: '4 months',
-                impact: 'Smooth driving → Extended life by 12%',
-                confidence: {total: 78, obd: 40, history: 25, behavior: 13},
-                history: [95, 94, 93, 93, 92, 92],
-                costs: {now: 300, later: 1200},
-                maintenance: ['Fluid level: Good', 'Filter: Good', 'Clutch: Excellent'],
-                sensors: ['Transmission temp', 'Fluid level sensor', 'Pressure sensor'],
-                recommendations: ['Continue current maintenance', 'Monitor fluid levels', 'Regular service intervals']
-            },
-            suspension: {
-                name: 'Suspension',
-                health: 25,
-                days: 7,
-                miles: 500,
-                rul: '1 week',
-                impact: 'Rough road driving → Shock wear 25% faster',
-                confidence: {total: 95, obd: 30, history: 35, behavior: 30},
-                history: [75, 65, 50, 40, 30, 25],
-                costs: {now: 450, later: 850},
-                maintenance: ['Shock absorbers: Poor', 'Springs: Fair', 'Bushings: Poor'],
-                sensors: ['Height sensor', 'Shock position', 'Load sensor'],
-                recommendations: ['Replace shock absorbers urgently', 'Inspect springs', 'Check alignment']
-            }
-        };
-        this.initializeEventListeners();
+        this.charts = {};
+        this.currentData = null;
+        this.retryCount = 0;
+        this.maxRetries = 10; // Stop trying after 10 failed attempts
         this.initializeCharts();
-        this.updateHealthMeters();
+        this.startRealTimeUpdates();
     }
 
-    initializeEventListeners() {
-        // Component selection
-        document.querySelectorAll('.component-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const component = item.dataset.component;
-                this.selectComponent(component);
-            });
-        });
+    initializeCharts() {
+        console.log("✅ Initializing charts...");
 
-        // View toggles
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const view = btn.dataset.view;
-                this.switchView(view);
-            });
-        });
-
-        // Tab navigation
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.dataset.tab;
-                this.switchTab(tab);
-            });
-        });
-
-        // Car part hover
-        document.querySelectorAll('.car-part').forEach(part => {
-            part.addEventListener('click', () => {
-                const component = part.dataset.part;
-                this.selectComponent(component);
-                this.switchView('list');
-            });
-        });
-
-        // Action buttons
-        document.querySelectorAll('.btn-action').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const action = btn.classList.contains('schedule') ? 'schedule' :
-                             btn.classList.contains('order') ? 'order' : 'ignore';
-                this.handleAction(action);
-            });
-        });
-    }
-
-    selectComponent(componentKey) {
-        const component = this.components[componentKey];
-        if (!component) return;
-
-        this.selectedComponent = componentKey;
-
-        // Update selected component visual
-        document.querySelectorAll('.component-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        document.querySelector(`[data-component="${componentKey}"]`).classList.add('selected');
-
-        // Update detail panel
-        document.getElementById('selectedComponent').textContent = component.name;
-        this.updateOverviewTab(component);
-        this.updateHistoryChart(component);
-        this.updateCostChart(component);
-        this.updateServiceTab(component);
-    }
-
-    updateOverviewTab(component) {
-        const overviewTab = document.getElementById('overviewTab');
-        overviewTab.innerHTML = `
-            <div class="component-overview">
-                <div class="overview-stats">
-                    <div class="stat-card">
-                        <h4>Health Score</h4>
-                        <div class="health-score ${component.health < 50 ? 'critical' : component.health < 75 ? 'warning' : 'good'}">
-                            ${component.health}%
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Time Remaining</h4>
-                        <div class="time-remaining">${component.days} days</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Miles Remaining</h4>
-                        <div class="miles-remaining">${component.miles.toLocaleString()} miles</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>RUL Estimate</h4>
-                        <div class="rul-estimate">${component.rul}</div>
-                    </div>
-                </div>
-
-                <div class="confidence-analysis">
-                    <h4>AI Confidence Breakdown</h4>
-                    <div class="confidence-bars">
-                        <div class="confidence-bar">
-                            <span>OBD-II Sensors</span>
-                            <div class="bar"><div class="fill" style="width: ${component.confidence.obd}%"></div></div>
-                            <span>${component.confidence.obd}%</span>
-                        </div>
-                        <div class="confidence-bar">
-                            <span>Historical Patterns</span>
-                            <div class="bar"><div class="fill" style="width: ${component.confidence.history}%"></div></div>
-                            <span>${component.confidence.history}%</span>
-                        </div>
-                        <div class="confidence-bar">
-                            <span>Driving Behavior</span>
-                            <div class="bar"><div class="fill" style="width: ${component.confidence.behavior}%"></div></div>
-                            <span>${component.confidence.behavior}%</span>
-                        </div>
-                    </div>
-                    <div class="total-confidence">
-                        Total Confidence: <strong>${component.confidence.total}%</strong>
-                    </div>
-                </div>
-
-                <div class="driving-impact-analysis">
-                    <h4>Driving Behavior Impact</h4>
-                    <p>${component.impact}</p>
-                </div>
-
-                <div class="current-readings">
-                    <h4>Current Maintenance Status</h4>
-                    <ul>
-                        ${component.maintenance.map(item => `<li>${item}</li>`).join('')}
-                    </ul>
-                </div>
-
-                <div class="sensor-data">
-                    <h4>Active Sensors</h4>
-                    <div class="sensor-list">
-                        ${component.sensors.map(sensor => `<span class="sensor-chip">${sensor}</span>`).join('')}
-                    </div>
-                </div>
-
-                <div class="repair-recommendations">
-                    <h4>Repair Recommendations</h4>
-                    <ul>
-                        ${component.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-                    </ul>
-                </div>
-            </div>
-        `;
-    }
-
-    updateHistoryChart(component) {
-        const ctx = document.getElementById('historyChart');
-        if (this.historyChart) {
-            this.historyChart.destroy();
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {
+            console.error("❌ Chart.js is not loaded");
+            return;
         }
+
+        // Initialize all charts with empty data
+        this.initializeChart('engineTempChart', 'Engine Temperature (°C)', '#00d4ff');
+        this.initializeChart('oilPressureChart', 'Oil Pressure (kPa)', '#00ff88');
+        this.initializeChart('tirePressureChart', 'Tire Pressure (psi)', '#ff8800');
+        this.initializeChart('batteryVoltageChart', 'Battery Voltage (V)', '#A020F0');
+
+        // Set initial status messages
+        this.updatePredictionText('Waiting for sensor data... Please ensure the Python backend is running.');
+        this.setAllStatuses('WAITING');
+
+        console.log("✅ Charts initialized successfully");
+    }
+
+    initializeChart(canvasId, label, color) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) {
+            console.error(`❌ Canvas element not found: ${canvasId}`);
+            return null;
+        }
+
         const isLightTheme = document.body.classList.contains('light-theme');
-        const textColor = isLightTheme ? '#212529' : '#ffffff';
+        const textColor = isLightTheme ? '#212529' : '#FFFFFF';
         const gridColor = isLightTheme ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
 
-
-        this.historyChart = new Chart(ctx, {
+        const chart = new Chart(ctx.getContext('2d'), {
             type: 'line',
             data: {
-                labels: ['6 months ago', '5 months ago', '4 months ago', '3 months ago', '2 months ago', 'Now'],
+                labels: ['Waiting for data...'],
                 datasets: [{
-                    label: 'Health %',
-                    data: component.history,
-                    borderColor: '#00d4ff',
-                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                    fill: true,
-                    tension: 0.4
+                    label: label,
+                    data: [0],
+                    borderColor: color + '80', // Semi-transparent
+                    backgroundColor: `${color}20`,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: textColor
-                        }
-                    }
-                },
                 scales: {
                     y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            color: textColor
-                        },
-                        grid: {
-                            color: gridColor
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: textColor
-                        },
-                        grid: {
-                            color: gridColor
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    updateCostChart(component) {
-        const ctx = document.getElementById('costChart');
-        if (this.costChart) {
-            this.costChart.destroy();
-        }
-        
-        const isLightTheme = document.body.classList.contains('light-theme');
-        const textColor = isLightTheme ? '#212529' : '#ffffff';
-        const gridColor = isLightTheme ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
-
-        this.costChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Fix Now', 'Fix Later'],
-                datasets: [{
-                    label: 'Cost ($)',
-                    data: [component.costs.now, component.costs.later],
-                    backgroundColor: ['#00d4ff', '#ff6b6b'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
+                        beginAtZero: false,
                         ticks: {
                             color: textColor,
-                            callback: function(value) {
-                                return '$' + value;
+                            font: {
+                                size: 12
                             }
                         },
                         grid: {
@@ -418,131 +183,221 @@ class PredictiveMaintenance {
                     },
                     x: {
                         ticks: {
-                            color: textColor
+                            color: textColor,
+                            font: {
+                                size: 12
+                            }
                         },
                         grid: {
                             color: gridColor
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor,
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        this.charts[canvasId] = chart;
+        return chart;
+    }
+
+    async startRealTimeUpdates() {
+        // Start trying to fetch data immediately
+        await this.fetchData();
+        
+        // Set up periodic updates every 5 seconds
+        setInterval(() => {
+            this.fetchData();
+        }, 5000);
+    }
+
+    async fetchData() {
+        // Stop retrying if we've exceeded max retries
+        if (this.retryCount >= this.maxRetries) {
+            this.updatePredictionText('Backend connection failed. Please restart the Python scripts and refresh the page.');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/data');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Check if we have actual sensor data (not just an empty object)
+            if (data && Object.keys(data).length > 0 && data.engine_temperature_C !== undefined) {
+                this.currentData = data;
+                this.retryCount = 0; // Reset retry count on successful connection
+                
+                // Update charts with real data
+                this.updateCharts(data);
+                
+                // Update status badges
+                this.updateStatusBadges(data);
+                
+                // Update prediction text
+                this.updatePredictionText(data.prediction || 'Analysis in progress...');
+                
+                console.log("✅ Real sensor data received and updated", data);
+            } else {
+                // Data exists but doesn't contain sensor readings yet
+                this.updatePredictionText('Backend connected. Waiting for sensor data from MQTT...');
+            }
+            
+        } catch (error) {
+            this.retryCount++;
+            console.error(`❌ Error fetching data (attempt ${this.retryCount}/${this.maxRetries}):`, error);
+            
+            if (this.retryCount === 1) {
+                this.updatePredictionText('Connecting to backend... Please ensure predictive_engine.py is running on port 5000.');
+            } else if (this.retryCount < this.maxRetries) {
+                this.updatePredictionText(`Attempting to connect... (${this.retryCount}/${this.maxRetries})`);
+            }
+            
+            this.setAllStatuses('OFFLINE');
+        }
+    }
+
+    updateCharts(data) {
+        const now = new Date().toLocaleTimeString();
+        
+        // Only update charts if we have valid sensor data
+        if (data.engine_temperature_C !== undefined) {
+            this.updateChart('engineTempChart', now, data.engine_temperature_C);
+        }
+        if (data.oil_pressure_kPa !== undefined) {
+            this.updateChart('oilPressureChart', now, data.oil_pressure_kPa);
+        }
+        if (data.tire_pressure_psi !== undefined) {
+            this.updateChart('tirePressureChart', now, data.tire_pressure_psi);
+        }
+        if (data.battery_voltage_V !== undefined) {
+            this.updateChart('batteryVoltageChart', now, data.battery_voltage_V);
+        }
+    }
+
+    updateChart(chartId, label, value) {
+        const chart = this.charts[chartId];
+        if (!chart) return;
+
+        // Clear waiting message if present
+        if (chart.data.labels[0] === 'Waiting for data...') {
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.data.datasets[0].borderColor = chart.data.datasets[0].borderColor.replace('80', ''); // Remove transparency
+        }
+
+        // Add new data point
+        chart.data.labels.push(label);
+        chart.data.datasets[0].data.push(value);
+
+        // Keep only last 20 data points
+        if (chart.data.labels.length > 20) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+        }
+
+        chart.update('active');
+    }
+
+    updateStatusBadges(data) {
+        this.updateStatus('engine-status', data.engine_temperature_C, 85, 110);
+        this.updateStatus('oil-status', data.oil_pressure_kPa, 200, 450);
+        this.updateStatus('tire-status', data.tire_pressure_psi, 30, 35);
+        this.updateStatus('battery-status', data.battery_voltage_V, 12.0, 14.5);
+    }
+
+    updateStatus(badgeId, value, min, max) {
+        const badge = document.getElementById(badgeId);
+        if (!badge || value === undefined) return;
+
+        const range = max - min;
+        const normalizedValue = (value - min) / range;
+
+        if (normalizedValue < 0.2 || normalizedValue > 0.8) {
+            badge.className = 'status-badge status-critical';
+            badge.textContent = 'CRITICAL';
+        } else if (normalizedValue < 0.3 || normalizedValue > 0.7) {
+            badge.className = 'status-badge status-warning';
+            badge.textContent = 'WARNING';
+        } else {
+            badge.className = 'status-badge status-normal';
+            badge.textContent = 'NORMAL';
+        }
+    }
+
+    setAllStatuses(status) {
+        const statuses = ['engine-status', 'oil-status', 'tire-status', 'battery-status'];
+        statuses.forEach(statusId => {
+            const badge = document.getElementById(statusId);
+            if (badge) {
+                if (status === 'WAITING') {
+                    badge.className = 'status-badge status-warning';
+                    badge.textContent = 'WAITING';
+                } else if (status === 'OFFLINE') {
+                    badge.className = 'status-badge status-critical';
+                    badge.textContent = 'OFFLINE';
                 }
             }
         });
     }
 
-    updateServiceTab(component) {
-        const serviceTab = document.getElementById('serviceTab');
-        serviceTab.innerHTML = `
-            <div class="service-options">
-                <h4>Nearby Service Centers</h4>
-                <div class="service-center">
-                    <div class="center-info">
-                        <h5>AutoCare Plus</h5>
-                        <p>2.3 miles away • 4.8★</p>
-                        <p>Parts Available: ✓ | Est. Time: 2 hours</p>
-                        <p>Specializes in: ${component.name}</p>
-                    </div>
-                    <div class="service-pricing">
-                        <span class="price">$${component.costs.now}</span>
-                        <button class="btn-book-now">Book Now</button>
-                    </div>
-                </div>
-                <div class="service-center">
-                    <div class="center-info">
-                        <h5>QuickFix Motors</h5>
-                        <p>4.1 miles away • 4.6★</p>
-                        <p>Parts Available: ✓ | Est. Time: 3 hours</p>
-                        <p>Specializes in: ${component.name}</p>
-                    </div>
-                    <div class="service-pricing">
-                        <span class="price">$${component.costs.now + 50}</span>
-                        <button class="btn-book-now">Book Now</button>
-                    </div>
-                </div>
-                <div class="service-center">
-                    <div class="center-info">
-                        <h5>Premium Auto Service</h5>
-                        <p>6.8 miles away • 4.9★</p>
-                        <p>Parts Available: Next day | Est. Time: 1.5 hours</p>
-                        <p>Specializes in: ${component.name}</p>
-                    </div>
-                    <div class="service-pricing">
-                        <span class="price">$${component.costs.now - 30}</span>
-                        <button class="btn-book-now">Book Now</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
+    updatePredictionText(message) {
+        const predictionElement = document.getElementById('prediction-text');
+        if (!predictionElement) return;
 
-    switchView(view) {
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-view="${view}"]`).classList.add('active');
-
-        document.getElementById('listView').classList.toggle('active', view === 'list');
-        document.getElementById('carView').classList.toggle('active', view === 'car');
-    }
-
-    switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(`${tab}Tab`).classList.add('active');
-    }
-
-    updateHealthMeters() {
-        document.querySelectorAll('.meter-circle').forEach(meter => {
-            const health = parseInt(meter.dataset.health);
-            const radius = 30; // SVG circle radius
-            const circumference = 2 * Math.PI * radius;
-            const progressValue = (health / 100) * circumference;
-            
-            const progressCircle = meter.querySelector('.gauge-progress');
-            if (progressCircle) {
-                progressCircle.style.strokeDasharray = `${progressValue}, ${circumference}`;
-            }
-        });
-    }
-
-    handleAction(action) {
-        let message = '';
-        switch(action) {
-            case 'schedule':
-                message = 'Service appointment scheduled successfully!';
-                break;
-            case 'order':
-                message = 'Parts ordered and will arrive in 2-3 business days!';
-                break;
-            case 'ignore':
-                message = 'Alert ignored. We\'ll remind you again in 3 days.';
-                break;
+        predictionElement.textContent = message;
+        
+        // Color coding based on message content
+        if (message.includes('Error') || message.includes('failed') || message.includes('OFFLINE')) {
+            predictionElement.style.color = '#ff4444';
+        } else if (message.includes('Waiting') || message.includes('connecting') || message.includes('Attempting')) {
+            predictionElement.style.color = '#ff8800';
+        } else if (message.includes('Optimal') || message.includes('Normal')) {
+            predictionElement.style.color = '#00ff88';
+        } else {
+            predictionElement.style.color = '#a0a8b8';
         }
-
-        // Show notification
-        const notification = document.createElement('div');
-        notification.className = 'action-notification';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-check-circle"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-
-    initializeCharts() {
     }
 }
+
+// Theme-aware chart updates when theme changes
+function observeThemeChanges() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                // Reinitialize charts with new theme colors if we have data
+                const predictiveMaintenance = window.predictiveMaintenanceInstance;
+                if (predictiveMaintenance && predictiveMaintenance.currentData) {
+                    predictiveMaintenance.initializeCharts();
+                    predictiveMaintenance.updateCharts(predictiveMaintenance.currentData);
+                }
+            }
+        });
+    });
+
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.predictiveMaintenanceInstance = new PredictiveMaintenance();
+    observeThemeChanges();
+});
 
 function googleTranslateElementInit() {
     new google.translate.TranslateElement({

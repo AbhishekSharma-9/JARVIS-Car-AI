@@ -440,6 +440,12 @@ body::after {
     gap: 20px;
 }
 
+.feature-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 .feature-card-center {
     background: var(--secondary-bg);
     padding: 20px;
@@ -447,9 +453,10 @@ body::after {
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
     text-align: center;
+    height: 100%;
 }
 
-.feature-card-center:hover {
+.feature-card-link:hover .feature-card-center {
     transform: translateY(-3px);
     border-color: var(--accent-blue);
     box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
@@ -505,7 +512,7 @@ body::after {
     transition: all 0.3s ease;
 }
 
-.feature-link:hover {
+.feature-card-link:hover .feature-link {
     color: var(--accent-green);
     text-decoration: none;
 }

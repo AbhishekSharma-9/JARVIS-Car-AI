@@ -1,327 +1,119 @@
-// sensor-integrity.js
+// public/js/sensor-integrity.js
+$(function(){
+        // Load the header component and its script
+        $("#header-placeholder").load("/header/header.html", function() {
+            $.getScript("/header/header.js");
+            console.log("Header loaded.");
+        });
 
-/**
- * Primary entry point after the DOM is fully loaded.
- */
-document.addEventListener('DOMContentLoaded', async () => {
-    // Load shared header and wait for it to be ready
-    await loadSharedComponents();
+        // Load the chatbot component and its script using the confirmed working pattern
+        $("#chatbot-placeholder").load("/chatbot/chatbot.html", function() {
+            $.getScript("/chatbot/chatbot.js");
+            console.log("Chatbot loaded.");
+        });
 
-    // --- INITIALIZE HEADER FUNCTIONALITY ---
-    initializeThemeLogic();
-    initializeActiveNav();
-    initializeMobileMenu();
+        // Initialize the sensor page once the document is ready
+        initializeSensorPage();
+    });
 
-    initializeSensorPage();
-});
+function updateSensorCard(sensorData) {
+    const card = document.querySelector(`[data-sensor-id="${sensorData.sensorId}"]`);
+    if (!card) return;
 
-/**
- * Loads the shared header component from an external file using fetch.
- */
-async function loadSharedComponents() {
+    // --- Card Status and Header ---
+    card.classList.remove('good', 'warning', 'critical');
+    card.classList.add(sensorData.status);
+    card.querySelector('.sensor-icon-wrapper').className = `sensor-icon-wrapper ${sensorData.status}`;
+    card.querySelector('.sensor-title-section h4').textContent = sensorData.name;
+    card.querySelector('.sensor-location').textContent = sensorData.location;
+    const statusBadge = card.querySelector('.sensor-status-badge');
+    statusBadge.className = `sensor-status-badge ${sensorData.status}`;
+    statusBadge.innerHTML = `<span class="status-dot"></span> ${sensorData.statusText}`;
+
+    // --- Metrics Population (New Logic) ---
+    const primaryPanel = card.querySelector('.primary-metric-panel');
+    const secondaryPanel = card.querySelector('.secondary-metrics-panel');
+    primaryPanel.innerHTML = '';
+    secondaryPanel.innerHTML = '';
+    
+    const primaryMetric = sensorData.metrics.find(m => m.type === 'primary');
+    if (primaryMetric) {
+        primaryPanel.classList.remove('good', 'warning', 'critical');
+        primaryPanel.classList.add(primaryMetric.status);
+        primaryPanel.innerHTML = `
+            <div class="metric-value">${primaryMetric.value}</div>
+            <div class="metric-label">${primaryMetric.label}</div>
+        `;
+    }
+
+    sensorData.metrics.filter(m => m.type !== 'primary').forEach(metric => {
+        secondaryPanel.innerHTML += `
+            <div class="secondary-metric">
+                <div class="metric-value">${metric.value}</div>
+                <div class="metric-label">${metric.label}</div>
+            </div>
+        `;
+    });
+
+    // --- Chart Section ---
+    const trendIndicator = card.querySelector('.trend-indicator');
+    trendIndicator.className = `trend-indicator ${sensorData.trend.status}`;
+    trendIndicator.innerHTML = `<i class="fas ${sensorData.trend.icon}"></i> ${sensorData.trend.status.charAt(0).toUpperCase() + sensorData.trend.status.slice(1)}`;
+    const canvas = card.querySelector('.main-chart'); // Updated selector
+    const ctx = canvas.getContext('2d');
+    if (canvas.chartInstance) canvas.chartInstance.destroy();
+    
+    let borderColor = sensorData.status === 'good' ? 'rgba(0, 255, 136, 0.8)' : 
+                      sensorData.status === 'warning' ? 'rgba(255, 136, 0, 0.8)' : 
+                      sensorData.status === 'critical' ? 'rgba(255, 68, 68, 0.8)' : 'rgba(0, 212, 255, 0.8)';
+    const backgroundColor = borderColor.replace('0.8', '0.1');
+
+    canvas.chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array(sensorData.chartData.length).fill(''),
+            datasets: [{ data: sensorData.chartData, borderColor, backgroundColor, fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } }
+        }
+    });
+
+    // --- Footer Section ---
+    const nextAction = card.querySelector('.next-action');
+    nextAction.innerHTML = `<i class="fas ${sensorData.footer.icon}"></i><span>${sensorData.footer.text} <strong>${sensorData.footer.textBold}</strong></span>`;
+    const actionBtn = card.querySelector('.action-btn');
+    actionBtn.className = `action-btn ${sensorData.button.status}`;
+    actionBtn.innerHTML = `<i class="fas ${sensorData.button.icon}"></i> ${sensorData.button.text}`;
+}
+
+async function initializeSensorPage() {
+    const allCards = document.querySelectorAll('.sensor-card-detailed');
+    allCards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+    });
+
     try {
-        const headerPlaceholder = document.getElementById('header-placeholder');
-        if (headerPlaceholder) {
-            const headerResponse = await fetch('/header/header.html');
-            headerPlaceholder.innerHTML = await headerResponse.text();
-        }
+        const response = await fetch('http://localhost:3001/api/sensors');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const sensors = await response.json();
+        sensors.forEach(updateSensorCard);
     } catch (error) {
-        console.error('JARVIS Error: Could not load shared header component.', error);
-    }
-}
-
-/**
- * Sets up the theme toggling functionality.
- */
-function initializeThemeLogic() {
-    const themeToggleButton = document.getElementById('theme-toggle-btn');
-    if (!themeToggleButton) {
-        console.error("Theme toggle button not found in loaded header.");
-        return;
+        console.error("Could not fetch sensor data:", error);
     }
 
-    const applyTheme = (theme) => {
-        const icon = themeToggleButton.querySelector('i');
-        if (theme === 'light') {
-            document.body.classList.add('light-theme');
-            if (icon) icon.className = 'fas fa-sun';
-        } else {
-            document.body.classList.remove('light-theme');
-            if (icon) icon.className = 'fas fa-moon';
-        }
-    };
-
-    // On page load, check localStorage for a saved theme preference
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    applyTheme(savedTheme);
-
-    // Add a click listener to the button to toggle the theme
-    themeToggleButton.addEventListener('click', () => {
-        const isLight = document.body.classList.contains('light-theme');
-        if (isLight) {
-            localStorage.setItem('theme', 'dark');
-            applyTheme('dark');
-        } else {
-            localStorage.setItem('theme', 'light');
-            applyTheme('light');
-        }
-    });
-}
-
-/**
- * Sets the 'active' class on the correct navigation link based on the current page.
- */
-function initializeActiveNav() {
-    const path = window.location.pathname;
-    const currentPage = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
-    const navItems = document.querySelectorAll('.nav-item');
-
-    navItems.forEach(item => {
-        if (item.tagName === 'A') {
-            const href = item.getAttribute('href');
-            if (href === currentPage) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        }
-    });
-}
-
-/**
- * Sets up the toggle functionality for the mobile navigation menu.
- */
-function initializeMobileMenu() {
-    const menuToggleBtn = document.querySelector('.menu-toggle');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const navbar = document.querySelector('.navbar');
-
-    if (menuToggleBtn && mobileMenu && navbar) {
-        menuToggleBtn.addEventListener('click', (event) => {
-            event.stopPropagation();
-            mobileMenu.classList.toggle('open');
-            const toggleIcon = menuToggleBtn.querySelector('i');
-            if (mobileMenu.classList.contains('open')) {
-                toggleIcon.classList.remove('fa-bars');
-                toggleIcon.classList.add('fa-times');
-            } else {
-                toggleIcon.classList.remove('fa-times');
-                toggleIcon.classList.add('fa-bars');
-            }
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!navbar.contains(event.target) && mobileMenu.classList.contains('open')) {
-                mobileMenu.classList.remove('open');
-                const toggleIcon = menuToggleBtn.querySelector('i');
-                toggleIcon.classList.remove('fa-times');
-                toggleIcon.classList.add('fa-bars');
-            }
-        });
-    }
-}
-
-
-/**
- * Initializes all logic specific to the Sensor Integrity page.
- */
-function initializeSensorPage() {
-    // --- Elements ---
-    const paginationDots = document.querySelectorAll('.pagination-dot');
-    const sections = document.querySelectorAll('.sensor-section');
-    const scrollContainer = document.querySelector('.scroll-container');
-    const miniChartCanvases = document.querySelectorAll('.mini-chart');
-
-    // --- SCROLL-SNAPPING PAGE NAVIGATION ---
-    let currentSection = 0;
-    let isScrolling = false;
-    let scrollTimeout;
-
-    // Updates which pagination dot is highlighted as 'active'.
-    const updateActiveDot = (sectionIndex) => {
-        paginationDots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === sectionIndex);
-        });
-    };
-
-    // Updates the URL hash to reflect the current section.
-    const updateURL = (sectionIndex) => {
-        const sectionNames = ['overview', 'engine-systems', 'wheels-power', 'anomaly-detection', 'ai-insights'];
-        if(sectionIndex >= 0 && sectionIndex < sectionNames.length) {
-            history.replaceState(null, null, `#${sectionNames[sectionIndex]}`);
-        }
-    };
-    
-    // Smoothly scrolls the page to the selected section.
-    const scrollToSection = (sectionIndex) => {
-        if (isScrolling || sectionIndex < 0 || sectionIndex >= sections.length) return;
-        
-        isScrolling = true;
-        const targetSection = sections[sectionIndex];
-        
-        if (targetSection) {
-            scrollContainer.scrollTo({
-                top: targetSection.offsetTop,
-                behavior: 'smooth'
-            });
-
-            const checkScrollEnd = () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    isScrolling = false;
-                    currentSection = sectionIndex;
-                    updateActiveDot(currentSection);
-                    updateURL(currentSection);
-                }, 500);
-            };
-            
-            scrollContainer.addEventListener('scroll', checkScrollEnd, { once: true });
-            checkScrollEnd();
-        } else {
-            isScrolling = false;
-        }
-    };
-    
-    // Add click listeners to each pagination dot.
-    paginationDots.forEach((dot) => {
-        dot.addEventListener('click', () => {
-            const sectionIndex = parseInt(dot.dataset.section, 10);
-            scrollToSection(sectionIndex);
-        });
-    });
-
-    // Handles manual user scrolling.
-    const handleManualScroll = () => {
-        if (isScrolling) return;
-
-        const scrollTop = scrollContainer.scrollTop;
-        let closestSection = 0;
-
-        sections.forEach((section, index) => {
-            const sectionTop = section.offsetTop;
-            const distance = Math.abs(scrollTop - sectionTop);
-            const closestDistance = Math.abs(scrollTop - sections[closestSection].offsetTop);
-            if(distance < closestDistance) {
-                closestSection = index;
-            }
-        });
-        
-        if (currentSection !== closestSection) {
-            currentSection = closestSection;
-            updateActiveDot(currentSection);
-            updateURL(currentSection);
-        }
-    };
-
-    scrollContainer.addEventListener('scroll', () => {
-        if(isScrolling) return;
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(handleManualScroll, 150);
-    });
-
-    // --- Mini Chart Initialization ---
-    miniChartCanvases.forEach(canvas => {
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const card = canvas.closest('.sensor-card-modern');
-        let borderColor = 'rgba(0, 212, 255, 0.8)'; // Default blue
-
-        if (card.classList.contains('good')) borderColor = 'rgba(0, 255, 136, 0.8)';
-        else if (card.classList.contains('warning')) borderColor = 'rgba(255, 136, 0, 0.8)';
-        else if (card.classList.contains('critical')) borderColor = 'rgba(255, 68, 68, 0.8)';
-
-        const backgroundColor = borderColor.replace('0.8', '0.1');
-        const data = Array.from({ length: 10 }, () => Math.random() * 80 + 20);
-
-        if (card.classList.contains('critical')) {
-            for (let i = 1; i < data.length; i++) data[i] = Math.max(5, data[i-1] - Math.random() * 10);
-        }
-        if (card.classList.contains('warning')) {
-            for (let i = 1; i < data.length; i++) data[i] = Math.min(100, data[i-1] + Math.random() * 5);
-        }
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: Array(10).fill(''),
-                datasets: [{ data, borderColor, backgroundColor, fill: true, tension: 0.4, pointRadius: 0, borderWidth: 3 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } }
-            }
-        });
-    });
-
-    // --- Section Transition Effects ---
-    const sectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            const cards = entry.target.querySelectorAll('.sensor-card-modern, .summary-card, .priority-card, .anomaly-heatmap-card, .ai-insight-card');
-            if (entry.isIntersecting) {
-                cards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, index * 100);
-                });
-            } else {
-                 cards.forEach((card) => {
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(30px)';
-                });
-            }
-        });
-    }, { root: scrollContainer, threshold: 0.5 });
-
-    sections.forEach(section => {
-        sectionObserver.observe(section);
-        const cards = section.querySelectorAll('.sensor-card-modern, .summary-card, .priority-card, .anomaly-heatmap-card, .ai-insight-card');
-        cards.forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        });
-    });
-
-    // --- URL Hash Navigation ---
-    const handleHashChange = () => {
-        const hash = window.location.hash.substring(1);
-        const sectionNames = ['overview', 'engine-systems', 'wheels-power', 'anomaly-detection', 'ai-insights'];
-        const sectionIndex = sectionNames.indexOf(hash);
-
-        if (sectionIndex !== -1 && sectionIndex !== currentSection) {
-            scrollToSection(sectionIndex);
-        }
-    };
-    window.addEventListener('hashchange', handleHashChange);
-
-    // --- INITIALIZE PAGE ---
-    const initialHash = window.location.hash.substring(1);
-    const sectionNames = ['overview', 'engine-systems', 'wheels-power', 'anomaly-detection', 'ai-insights'];
-    const initialSectionIndex = sectionNames.indexOf(initialHash);
-
-    if (initialSectionIndex !== -1) {
-        scrollToSection(initialSectionIndex);
-    } else {
-        updateActiveDot(0);
-        updateURL(0);
-    }
-    
     setTimeout(() => {
-        const firstSection = sections[currentSection];
-        if (firstSection) {
-            const cards = firstSection.querySelectorAll('.sensor-card-modern, .summary-card, .priority-card, .anomaly-heatmap-card, .ai-insight-card');
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        }
-    }, 100);
+        allCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    }, 100); 
 }
 
 function googleTranslateElementInit() {

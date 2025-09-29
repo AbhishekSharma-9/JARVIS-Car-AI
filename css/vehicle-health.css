@@ -284,16 +284,16 @@ body::after {
     padding: 30px 15px;
     max-width: 1800px;
     margin: 0 auto;
-    overflow-x: auto;
 }
 
-
+/* UPDATED SECTION FOR RESPONSIVE GRID */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(220px, 1fr));
+    /* This makes the grid wrap automatically */
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 15px;
     width: 100%;
-    min-width: 1440px;
+    /* Removed min-width to allow wrapping */
 }
 
 .metric-card {
@@ -836,7 +836,7 @@ body::after {
 
 @media (max-width: 1600px) {
     .metrics-grid {
-        grid-template-columns: repeat(3, minmax(220px, 1fr));
+        /*grid-template-columns: repeat(3, minmax(220px, 1fr));*/
         min-width: auto;
     }
 }
@@ -928,4 +928,52 @@ body::after {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent-blue);
+}
+
+
+/* Notification Styling */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 10001;
+    transform: translateX(calc(100% + 20px));
+    transition: transform 0.5s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+/* Critical Notification Style */
+.notification.critical {
+    background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+}
+
+.notification::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.2rem;
+}
+
+.notification.info::before {
+    content: "\f05a"; /* FontAwesome info-circle icon */
+}
+
+.notification.critical::before {
+    content: "\f071"; /* FontAwesome exclamation-triangle icon */
+    animation: alert-icon-pulse 1.5s infinite;
+}
+
+@keyframes alert-icon-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
 }

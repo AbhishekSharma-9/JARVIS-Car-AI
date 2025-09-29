@@ -1,16 +1,10 @@
 /*
  * vehicle-health.js
+ * Final version with data polling for real-time updates.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    /**
-     * Fetches and injects an HTML component into a placeholder element.
-     * Optionally loads a script associated with the component.
-     * @param {string} componentUrl - The URL of the HTML file to load.
-     * @param {string} placeholderId - The ID of the element to inject the HTML into.
-     * @param {string} [scriptUrl] - Optional: The URL of the JS file to load after the HTML.
-     */
     const loadComponent = async (componentUrl, placeholderId, scriptUrl) => {
         try {
             const response = await fetch(componentUrl);
@@ -22,8 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 placeholder.innerHTML = html;
                 if (scriptUrl) {
                     const existingScript = document.querySelector(`script[src="${scriptUrl}"]`);
-                    if(existingScript) existingScript.remove();
-
+                    if (existingScript) existingScript.remove();
                     const script = document.createElement('script');
                     script.src = scriptUrl;
                     script.defer = true;
@@ -35,426 +28,248 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Main initialization function.
-     */
     const initializePage = async () => {
-        // Load shared components. The associated JS will handle their own functionality.
         await loadComponent('/header/header.html', 'header-placeholder', '/header/header.js');
         await loadComponent('/chatbot/chatbot.html', 'chatbot-placeholder', '/chatbot/chatbot.js');
-
-        // Initialize the vehicle health dashboard features after components are ready.
         initializeDashboardLogic();
     };
 
-    // --- Original Vehicle Health Dashboard JavaScript ---
     function initializeDashboardLogic() {
         let charts = {};
         let updateInterval;
+        let metricStates = {};
 
         initializeCharts();
-        startRealTimeUpdates();
+        fetchAndUpdateAllMetrics(); // For initial load
+        startRealTimeUpdates(); // For subsequent updates
         setupEventListeners();
         animateMetricCards();
 
-        function initializeCharts() {
-            // Engine Temperature Mini Chart
-            const engineCtx = document.getElementById('engineChart').getContext('2d');
-            charts.engine = new Chart(engineCtx, {
-                type: 'line',
-                data: {
-                    labels: ['', '', '', '', '', '', ''],
-                    datasets: [{
-                        data: [85, 87, 86, 89, 87, 88, 87],
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
-                    }
-                }
-            });
+        async function initializeCharts() {
+            try {
+                // Engine Temperature Mini Chart
+                const engineHistory = await (await fetch('http://localhost:3001/api/engine-history')).json();
+                const engineCtx = document.getElementById('engineChart').getContext('2d');
+                charts.engine = new Chart(engineCtx, {
+                    type: 'line', data: { labels: engineHistory.map(d => new Date(d.timestamp).toLocaleTimeString()), datasets: [{ data: engineHistory.map(d => d.engineTemp), borderColor: '#00d4ff', backgroundColor: 'rgba(0, 212, 255, 0.1)', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0 }] },
+                    options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false } } }
+                });
 
-            // Performance Analytics Chart
-            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-            charts.performance = new Chart(performanceCtx, {
-                type: 'line',
-                data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-                    datasets: [{
-                        label: 'Engine Temp (°C)',
-                        data: [85, 87, 92, 95, 88, 86, 84],
-                        borderColor: '#ff8800',
-                        backgroundColor: 'rgba(255, 136, 0, 0.1)',
-                        tension: 0.4
-                    }, {
-                        label: 'Oil Quality (%)',
-                        data: [84, 84, 83, 82, 83, 84, 84],
-                        borderColor: '#00ff88',
-                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                        tension: 0.4
-                    }, {
-                        label: 'Battery Voltage (V)',
-                        data: [12.6, 12.7, 12.5, 12.4, 12.6, 12.7, 12.6],
-                        borderColor: '#00d4ff',
-                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#ffffff' }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: '#a0a8b8' },
-                            grid: { color: 'rgba(160, 168, 184, 0.1)' }
-                        },
-                        y: {
-                            ticks: { color: '#a0a8b8' },
-                            grid: { color: 'rgba(160, 168, 184, 0.1)' }
-                        }
-                    }
-                }
-            });
+                // Performance Analytics Chart
+                const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+                charts.performance = new Chart(performanceCtx, {
+                    type: 'line', data: { labels: [], datasets: [{ label: 'Engine Temp (°C)', data: [], borderColor: '#ff8800', backgroundColor: 'rgba(255, 136, 0, 0.1)', tension: 0.4, spanGaps: true }, { label: 'Oil Quality (%)', data: [], borderColor: '#00ff88', backgroundColor: 'rgba(0, 255, 136, 0.1)', tension: 0.4, spanGaps: true }, { label: 'Battery Voltage (V)', data: [], borderColor: '#00d4ff', backgroundColor: 'rgba(0, 212, 255, 0.1)', tension: 0.4, spanGaps: true }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#ffffff' } } }, scales: { x: { ticks: { color: '#a0a8b8' } }, y: { ticks: { color: '#a0a8b8' } } } }
+                });
+                updatePerformanceChart('24h');
+
+            } catch (error) {
+                console.error("Failed to initialize charts:", error);
+            }
         }
-
+        
+        async function updatePerformanceChart(period) {
+            try {
+                const response = await fetch(`http://localhost:3001/api/performance-history?period=${period}`);
+                const perfHistory = await response.json();
+                if (charts.performance) {
+                    charts.performance.data.labels = perfHistory.labels;
+                    charts.performance.data.datasets[0].data = perfHistory.engineTemps;
+                    charts.performance.data.datasets[1].data = perfHistory.oilQualities;
+                    charts.performance.data.datasets[2].data = perfHistory.batteryVoltages;
+                    charts.performance.update();
+                }
+            } catch (error) { console.error(`Failed to update performance chart for period ${period}:`, error); }
+        }
+        
+        /**
+         * Starts an interval to periodically fetch the latest metrics from the server.
+         */
         function startRealTimeUpdates() {
-            updateInterval = setInterval(() => {
-                updateMetrics();
-            }, 3000);
+            // Fetch new data every 5 seconds
+            updateInterval = setInterval(fetchAndUpdateAllMetrics, 5000);
         }
 
-        function updateMetrics() {
-            // Engine Temperature
-            const engineTemp = 80 + Math.random() * 20;
-            document.getElementById('engine-temp').textContent = Math.round(engineTemp);
-            updateStatus('engine', engineTemp, 95, 105);
+        async function fetchAndUpdateAllMetrics() {
+            try {
+                const responses = await Promise.all([
+                    fetch('http://localhost:3001/api/engine-data'), fetch('http://localhost:3001/api/oil-data'),
+                    fetch('http://localhost:3001/api/brakes-data'), fetch('http://localhost:3001/api/battery-data'),
+                    fetch('http://localhost:3001/api/tires-data'), fetch('http://localhost:3001/api/coolant-data')
+                ]);
+                const [engineData, oilData, brakesData, batteryData, tiresData, coolantData] = await Promise.all(responses.map(res => res.json()));
 
-            // Oil Quality
-            const oilQuality = 80 + Math.random() * 10;
-            const oilElement = document.getElementById('oil-quality');
-            const oilProgress = document.getElementById('oil-progress');
-            oilElement.textContent = Math.round(oilQuality);
-            oilProgress.style.width = oilQuality + '%';
-            document.getElementById('oil-level').textContent = `${(90 + Math.random() * 10).toFixed(0)}%`;
-            document.getElementById('oil-viscosity').textContent = Math.random() > 0.2 ? 'Good' : 'Fair';
-
-            // Battery
-            const batteryVoltage = 12.0 + Math.random() * 1.0;
-            document.getElementById('battery-voltage').textContent = batteryVoltage.toFixed(1);
-            const batteryCharge = 75 + Math.random() * 20;
-            document.getElementById('battery-charge').textContent = `${Math.round(batteryCharge)}%`;
-            document.getElementById('battery-level').style.width = `${batteryCharge}%`;
-            document.getElementById('battery-health').textContent = batteryCharge > 80 ? 'Good' : 'Fair';
-
-            // Tire Pressures
-            ['fl', 'fr', 'rl', 'rr'].forEach(tire => {
-                const pressure = 30 + Math.random() * 5;
-                document.getElementById(`tire-${tire}`).textContent = Math.round(pressure);
-            });
-            const flPressure = parseInt(document.getElementById('tire-fl').textContent);
-            updateStatus('tire', flPressure, 30, 28); // If FL is below 30, warning; below 28, critical
-
-            // Coolant
-            const coolantTemp = 85 + Math.random() * 10;
-            document.getElementById('coolant-temp').textContent = Math.round(coolantTemp);
-            document.getElementById('coolant-level').style.height = `${(70 + Math.random() * 20).toFixed(0)}%`;
-            document.querySelector('.coolant-tank .level-indicator').textContent = document.getElementById('coolant-level').style.height;
-            updateStatus('coolant', coolantTemp, 100, 110);
-
-            updateChartData();
+                updateEngineUI(engineData);
+                updateOilUI(oilData);
+                updateBrakesUI(brakesData);
+                updateBatteryUI(batteryData);
+                updateTiresUI(tiresData);
+                updateCoolantUI(coolantData);
+            } catch (error) {
+                console.error("Failed to fetch initial vehicle metrics:", error);
+            }
         }
-
-        function updateStatus(metric, value, warningThreshold, criticalThreshold) {
+        
+        function renderStatusBadge(metric, statusString) {
             const statusElement = document.getElementById(`${metric}-status`);
             const card = document.querySelector(`[data-metric="${metric}"]`);
+            if (!statusElement || !card) return;
 
-            if (statusElement && card) {
-                if (value <= criticalThreshold) {
-                    statusElement.className = 'status-badge critical';
-                    statusElement.innerHTML = '<span class="status-dot"></span>CRITICAL';
-                    card.classList.add('alert');
-                } else if (value <= warningThreshold) {
-                    statusElement.className = 'status-badge warning';
-                    statusElement.innerHTML = '<span class="status-dot"></span>WARNING';
-                    card.classList.remove('alert');
-                } else {
-                    statusElement.className = 'status-badge normal';
-                    statusElement.innerHTML = '<span class="status-dot"></span>NORMAL';
-                    card.classList.remove('alert');
+            const statusMap = { 'Good': 'good', 'Normal': 'normal', 'Warning': 'warning', 'Critical': 'critical' };
+            const statusClass = statusMap[statusString] || 'normal';
+
+            statusElement.className = 'status-badge'; 
+            card.classList.remove('alert');
+            statusElement.classList.add(statusClass);
+            statusElement.innerHTML = `<span class="status-dot"></span>${statusString.toUpperCase()}`;
+            
+            if (statusClass === 'critical') {
+                card.classList.add('alert');
+            }
+            
+            if (statusClass === 'critical' && metricStates[metric] !== 'critical') {
+                showNotification(`${metric.charAt(0).toUpperCase() + metric.slice(1)} status is critical!`, 'critical');
+            }
+            metricStates[metric] = statusClass;
+        }
+
+        function updateEngineUI(data) {
+            if (!data || data.engineTemp === undefined) return;
+            document.getElementById('engine-temp').textContent = data.engineTemp;
+            renderStatusBadge('engine', data.status);
+
+            if (charts.engine && charts.engine.data.labels.length > 0 && data.timestamp) {
+                const lastTimestamp = charts.engine.data.labels[charts.engine.data.labels.length - 1];
+                const newTimestamp = new Date(data.timestamp).toLocaleTimeString();
+                // Only update chart if data is new
+                if(lastTimestamp !== newTimestamp){
+                    charts.engine.data.labels.shift();
+                    charts.engine.data.datasets[0].data.shift();
+                    charts.engine.data.labels.push(newTimestamp);
+                    charts.engine.data.datasets[0].data.push(data.engineTemp);
+                    charts.engine.update('none');
                 }
             }
         }
 
-        function updateChartData() {
-            if (charts.engine) {
-                const newData = charts.engine.data.datasets[0].data;
-                newData.shift();
-                newData.push(parseInt(document.getElementById('engine-temp').textContent));
-                charts.engine.update('none');
-            }
+        function updateOilUI(data) {
+            if (!data || data.oilQuality === undefined) return;
+            document.getElementById('oil-quality').textContent = data.oilQuality;
+            document.getElementById('oil-progress').style.width = `${data.oilQuality}%`;
+            document.getElementById('oil-level').textContent = `${data.oilLevel || 'N/A'}%`;
+            document.getElementById('oil-viscosity').textContent = data.viscosity || 'N/A';
+            renderStatusBadge('oil', data.status);
+        }
 
-            if (charts.performance) {
-                const engineTempData = charts.performance.data.datasets[0].data;
-                engineTempData.shift();
-                engineTempData.push(parseInt(document.getElementById('engine-temp').textContent));
+        function updateBrakesUI(data) {
+            if (!data || data.condition === undefined) return;
+            document.getElementById('brake-condition').textContent = data.condition;
+            document.getElementById('brake-progress').style.width = `${data.condition}%`;
+            document.querySelector('.brake-details .brake-wheel:nth-child(1) span').textContent = `Front: ${data.front}%`;
+            document.querySelector('.brake-details .brake-wheel:nth-child(2) span').textContent = `Rear: ${data.rear}%`;
+            renderStatusBadge('brakes', data.status);
+        }
+        
+        function updateBatteryUI(data) {
+            if (!data || !data.battery) return;
+            const { voltage, charge, health } = data.battery;
+            document.getElementById('battery-voltage').textContent = voltage.toFixed(1);
+            document.getElementById('battery-charge').textContent = `${charge}%`;
+            document.getElementById('battery-level').style.width = `${charge}%`;
+            document.getElementById('battery-health').textContent = health;
+            renderStatusBadge('battery', health);
+        }
 
-                const oilQualityData = charts.performance.data.datasets[1].data;
-                oilQualityData.shift();
-                oilQualityData.push(parseInt(document.getElementById('oil-quality').textContent));
+        function updateTiresUI(data) {
+            if (!data || !data.tires) return;
+            const { fl, fr, rl, rr } = data.tires;
+            document.getElementById('tire-fl').textContent = fl;
+            document.getElementById('tire-fr').textContent = fr;
+            document.getElementById('tire-rl').textContent = rl;
+            document.getElementById('tire-rr').textContent = rr;
+            renderStatusBadge('tires', data.status);
+        }
 
-                const batteryVoltageData = charts.performance.data.datasets[2].data;
-                batteryVoltageData.shift();
-                batteryVoltageData.push(parseFloat(document.getElementById('battery-voltage').textContent));
-
-                charts.performance.update('none');
-            }
+        function updateCoolantUI(data) {
+            if (!data || data.coolantTemp === undefined) return;
+            document.getElementById('coolant-temp').textContent = data.coolantTemp;
+            document.getElementById('coolant-level').style.height = `${data.coolantLevel}%`;
+            document.querySelector('.coolant-tank .level-indicator').textContent = `${data.coolantLevel}%`;
+            renderStatusBadge('coolant', data.status);
         }
 
         function setupEventListeners() {
-            document.querySelectorAll('.metric-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const metric = card.dataset.metric;
-                    openMetricModal(metric);
-                });
-            });
-
+            document.querySelectorAll('.metric-card').forEach(card => card.addEventListener('click', () => openMetricModal(card.getAttribute('data-metric'))));
             document.getElementById('closeModal').addEventListener('click', closeModal);
-            document.getElementById('metricModal').addEventListener('click', (e) => {
-                if (e.target.id === 'metricModal') closeModal();
+            document.getElementById('metricModal').addEventListener('click', (event) => {
+                if (event.target === document.getElementById('metricModal')) closeModal();
             });
-
-            document.querySelectorAll('.chart-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                });
-            });
-
             document.querySelector('.book-service-btn').addEventListener('click', () => {
-                showNotification('Booking service...');
+                showNotification('Connecting to your service dealer...', 'info');
+            });
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updatePerformanceChart(btn.getAttribute('data-period'));
+                });
             });
         }
 
         function animateMetricCards() {
-            const cards = document.querySelectorAll('.metric-card');
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.classList.add('animate-in');
-                }, index * 100);
+            document.querySelectorAll('.metric-card').forEach((card, index) => {
+                setTimeout(() => card.classList.add('animate-in'), index * 100);
             });
         }
-
+        
         function openMetricModal(metric) {
             const modal = document.getElementById('metricModal');
             const title = document.getElementById('modalTitle');
             const body = document.getElementById('modalBody');
-
-            const metricData = {
-                engine: {
-                    title: 'Engine Temperature Details',
-                    content: `
-                        <div class="modal-metric">
-                            <h4>Current Status</h4>
-                            <p>Temperature: ${document.getElementById('engine-temp').textContent}°C</p>
-                            <p>Status: ${document.getElementById('engine-status').textContent.trim().toLowerCase()}</p>
-                            <h4>Recommendations</h4>
-                            <ul>
-                                <li>Ensure coolant levels are optimal.</li>
-                                <li>Check radiator and fan for obstructions.</li>
-                                <li>Monitor temperature during heavy loads or hot weather.</li>
-                            </ul>
-                            <h4>Historical Data</h4>
-                            <div style="height: 150px;"><canvas id="modalEngineChart"></canvas></div>
-                        </div>
-                    `,
-                    chartData: charts.engine.data.datasets[0].data
-                },
-                oil: {
-                    title: 'Oil System Details',
-                    content: `
-                        <div class="modal-metric">
-                            <h4>Current Status</h4>
-                            <p>Quality: ${document.getElementById('oil-quality').textContent}%</p>
-                            <p>Level: ${document.getElementById('oil-level').textContent}</p>
-                            <p>Viscosity: ${document.getElementById('oil-viscosity').textContent}</p>
-                            <h4>Next Service</h4>
-                            <p>Oil change due in 2,450 miles or 1 month.</p>
-                            <h4>Recommendations</h4>
-                            <ul>
-                                <li>Adhere to manufacturer's recommended oil change intervals.</li>
-                                <li>Check oil level regularly, especially before long trips.</li>
-                            </ul>
-                        </div>
-                    `
-                },
-                brakes: {
-                    title: 'Brake System Details',
-                    content: `
-                        <div class="modal-metric">
-                            <h4>Pad Thickness</h4>
-                            <p>Front Left: 45% remaining</p>
-                            <p>Front Right: 45% remaining</p>
-                            <p>Rear Left: 68% remaining</p>
-                            <p>Rear Right: 68% remaining</p>
-                            <h4>Recommendation</h4>
-                            <p class="warning">⚠️ Front brake pads need replacement soon. Consider a full brake system inspection.</p>
-                            <h4>Safety Impact</h4>
-                            <ul>
-                                <li>Increased stopping distance.</li>
-                                <li>Potential for rotor damage if ignored.</li>
-                            </ul>
-                        </div>
-                    `
-                },
-                battery: {
-                    title: 'Battery Health Details',
-                    content: `
-                        <div class="modal-metric">
-                            <h4>Current Status</h4>
-                            <p>Voltage: ${document.getElementById('battery-voltage').textContent}V</p>
-                            <p>Charge: ${document.getElementById('battery-charge').textContent}</p>
-                            <p>Health: ${document.getElementById('battery-health').textContent}</p>
-                            <h4>Recommendations</h4>
-                            <ul>
-                                <li>Perform a battery load test annually.</li>
-                                <li>Ensure terminals are clean and corrosion-free.</li>
-                                <li>Avoid leaving accessories on when the engine is off.</li>
-                            </ul>
-                        </div>
-                    `
-                },
-                tires: {
-                    title: 'Tire Pressure Details (TPMS)',
-                    content: `
-                        <div class="modal-metric">
-                            <h4>Current Pressures (PSI)</h4>
-                            <p>Front Left: ${document.getElementById('tire-fl').textContent}</p>
-                            <p>Front Right: ${document.getElementById('tire-fr').textContent}</p>
-                            <p>Rear Left: ${document.getElementById('tire-rl').textContent}</p>
-                            <p>Rear Right: ${document.getElementById('tire-rr').textContent}</p>
-                            <h4>Recommendations</h4>
-                            <ul>
-                                <li>Maintain recommended tire pressure for optimal fuel efficiency and tire longevity.</li>
-                                <li>Check pressure monthly and before long trips.</li>
-                                <li>Rotate tires every 5,000-7,000 miles.</li>
-                            </ul>
-                        </div>
-                    `
-                },
-                coolant: {
-                    title: 'Coolant System Details',
-                    content: `
-                        <div class="modal-metric">
-                            <h4>Current Status</h4>
-                            <p>Temperature: ${document.getElementById('coolant-temp').textContent}°C</p>
-                            <p>Level: ${document.getElementById('coolant-level').style.height}</p>
-                            <h4>Recommendations</h4>
-                            <ul>
-                                <li>Ensure coolant levels are within the recommended range.</li>
-                                <li>Flush and replace coolant as per manufacturer's schedule.</li>
-                                <li>Monitor for any leaks or unusual temperature fluctuations.</li>
-                            </ul>
-                        </div>
-                    `
-                }
+            const metricDetails = {
+                engine: { title: 'Engine Health Details', content: `<h4>Current Temperature: ${document.getElementById('engine-temp').textContent}°C</h4><p>The engine control unit (ECU) monitors temperature to ensure optimal performance. Normal operating temperatures range from 80°C to 95°C.</p><p class="warning">High temperatures can indicate issues with the cooling system.</p>` },
+                oil: { title: 'Oil Quality & Level', content: `<h4>Quality: ${document.getElementById('oil-quality').textContent}%</h4><p>Oil quality degrades over time. Regular oil changes are crucial for engine longevity.</p><ul><li><strong>Level:</strong> ${document.getElementById('oil-level').textContent}</li><li><strong>Viscosity:</strong> ${document.getElementById('oil-viscosity').textContent}</li></ul>` },
+                brakes: { title: 'Brake Pad Condition', content: `<h4>Remaining Life: ${document.getElementById('brake-condition').textContent}%</h4><p>This estimates the remaining thickness of your brake pads. A warning status indicates that you should schedule a replacement soon.</p>` },
+                battery: { title: 'Battery Health', content: `<h4>Voltage: ${document.getElementById('battery-voltage').textContent}V</h4><p>A healthy 12V car battery should read between 12.4V and 12.7V when the engine is off.</p><ul><li><strong>Charge:</strong> ${document.getElementById('battery-charge').textContent}</li><li><strong>Health:</strong> ${document.getElementById('battery-health').textContent}</li></ul>` },
+                tires: { title: 'Tire Pressure (PSI)', content: `<p>Maintaining correct tire pressure is vital for safety, fuel economy, and tire lifespan.</p><ul><li><strong>Front Left:</strong> ${document.getElementById('tire-fl').textContent} PSI</li><li><strong>Front Right:</strong> ${document.getElementById('tire-fr').textContent} PSI</li><li><strong>Rear Left:</strong> ${document.getElementById('tire-rl').textContent} PSI</li><li><strong>Rear Right:</strong> ${document.getElementById('tire-rr').textContent} PSI</li></ul>` },
+                coolant: { title: 'Coolant System', content: `<h4>Temperature: ${document.getElementById('coolant-temp').textContent}°C</h4><p>The coolant system prevents the engine from overheating. The temperature should remain stable during operation.</p>` }
             };
-
-            if (metricData[metric]) {
-                title.textContent = metricData[metric].title;
-                body.innerHTML = metricData[metric].content;
-
-                if (metricData[metric].chartData) {
-                    const modalChartCtx = document.getElementById('modalEngineChart')?.getContext('2d');
-                    if (modalChartCtx) {
-                        new Chart(modalChartCtx, {
-                            type: 'line',
-                            data: {
-                                labels: ['-6h', '-5h', '-4h', '-3h', '-2h', '-1h', 'Now'],
-                                datasets: [{
-                                    label: 'Temperature (°C)',
-                                    data: metricData[metric].chartData,
-                                    borderColor: '#00d4ff',
-                                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.4,
-                                    pointRadius: 3
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: {
-                                    x: { ticks: { color: '#a0a8b8' }, grid: { color: 'rgba(160, 168, 184, 0.1)' } },
-                                    y: { ticks: { color: '#a0a8b8' }, grid: { color: 'rgba(160, 168, 184, 0.1)' } }
-                                }
-                            }
-                        });
-                    }
-                }
+            
+            if (metricDetails[metric]) {
+                title.textContent = metricDetails[metric].title;
+                body.innerHTML = metricDetails[metric].content;
+                modal.classList.add('active');
             }
-
-            modal.classList.add('active');
         }
-
+        
         function closeModal() {
             document.getElementById('metricModal').classList.remove('active');
-            const modalCanvas = document.getElementById('modalEngineChart');
-            if (modalCanvas) {
-                const chartInstance = Chart.getChart(modalCanvas);
-                if (chartInstance) {
-                    chartInstance.destroy();
-                }
-            }
         }
-
-        function showNotification(message) {
+        
+        function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.style.cssText = `
-                position: fixed; top: 100px; right: 20px;
-                background: var(--accent-blue); color: white;
-                padding: 15px 20px; border-radius: 8px;
-                z-index: 10000; animation: slideIn 0.3s ease;`;
+            notification.className = `notification ${type}`;
             notification.textContent = message;
             document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 10);
             setTimeout(() => {
-                notification.remove();
-            }, 3000);
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) document.body.removeChild(notification);
+                }, 500);
+            }, 4000);
         }
 
+        // Clean up the interval when the user navigates away
         window.addEventListener('beforeunload', () => {
-            if (updateInterval) {
-                clearInterval(updateInterval);
-            }
+            if (updateInterval) clearInterval(updateInterval);
         });
     }
 
-    // Start the page initialization process
     initializePage();
 });
 
-
 function googleTranslateElementInit() {
-    new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        autoDisplay: false
-    }, 'google_translate_element');
+    new google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false }, 'google_translate_element');
 }
+

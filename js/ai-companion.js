@@ -1,37 +1,26 @@
-/*ai-companion.js*/
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Main entry point after the HTML document is loaded.
-    
-    // Step 1: Load the header component and its script.
-    loadHeaderAndScripts(); 
-
-    // Step 2: Initialize the page-specific features.
-    initializeVoiceInterface();
-    initializeChatInput();
-    initializeClearChat();
-    initializeSuggestedPrompts();
-
-    // Smooth transition effect to prevent flash of unstyled content.
-    document.body.style.transition = 'background 0.3s ease, color 0.3s ease';
+    loadHeaderAndScripts();
+    initializeApp();
 });
 
-/**
- * Fetches the header HTML, injects it into the placeholder,
- * and then loads the necessary JavaScript for the header to function correctly.
- */
+const API_ENDPOINT = 'http://localhost:3000/api/chat';
+
+let conversationHistory = [];
+let availableVoices = [];
+let recognition;
+
+let isListening = false;
+let isAwake = false;
+let isSpeaking = false; // FIX: Flag to check if speech synthesis is active
+let recognitionStopFlag = false;
+let silenceTimeout;
+
 function loadHeaderAndScripts() {
     const headerPlaceholder = document.getElementById('header-placeholder');
-    if (!headerPlaceholder) {
-        console.error('Header placeholder not found!');
-        return;
-    }
-
+    if (!headerPlaceholder) return;
     fetch('/header/header.html')
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok for header.html.');
-            }
+            if (!response.ok) throw new Error('Failed to load header.html');
             return response.text();
         })
         .then(html => {
@@ -40,218 +29,313 @@ function loadHeaderAndScripts() {
             headerScript.src = '/header/header.js'; 
             document.body.appendChild(headerScript);
         })
-        .catch(error => {
-            console.error('Error loading header:', error);
-            headerPlaceholder.innerHTML = '<p style="color: red; text-align: center;">Error: Could not load navigation bar.</p>';
-        });
+        .catch(error => console.error('Error loading header:', error));
 }
 
+function initializeApp() {
+    loadVoices();
+    initializeVoiceInterface();
+    initializeLanguageSelector();
+    initializeChatInput();
+    initializeClearChat();
+    initializeSuggestedPrompts();
+    initializeStopSpeechButton();
+}
 
-/**
- * Initializes the voice control button and its associated animations.
- */
-function initializeVoiceInterface() {
+function loadVoices() {
+    return new Promise((resolve) => {
+        availableVoices = window.speechSynthesis.getVoices();
+        if (availableVoices.length > 0) {
+            resolve(availableVoices);
+            return;
+        }
+        window.speechSynthesis.onvoiceschanged = () => {
+            availableVoices = window.speechSynthesis.getVoices();
+            resolve(availableVoices);
+        };
+    });
+}
+
+function initializeLanguageSelector() {
+    const languageSelect = document.getElementById('language-select');
+    if (!languageSelect) return;
+
+    languageSelect.addEventListener('change', () => {
+        if (recognition) {
+            console.log(`Language changed to: ${languageSelect.value}. Restarting recognition.`);
+            recognition.lang = languageSelect.value;
+            
+            if (isListening) {
+                recognition.stop();
+                // onend will handle the automatic restart with the new language.
+            }
+        }
+    });
+}
+
+function initializeStopSpeechButton() {
+    const stopSpeechBtn = document.getElementById('stop-speech-btn');
+    if (!stopSpeechBtn) return;
+    stopSpeechBtn.addEventListener('click', () => {
+        window.speechSynthesis.cancel(); 
+        stopSpeechBtn.style.display = 'none';
+        isSpeaking = false; // FIX: Reset speaking flag
+        if (!recognitionStopFlag && recognition) {
+            try {
+                recognition.start();
+            } catch(e) { console.error("Could not restart recognition after stopping speech:", e); }
+        }
+    });
+}
+
+function updateVoiceUI(isActive, statusText = 'Click to start listening') {
     const voiceButton = document.getElementById('voice-btn');
     const voiceWaves = document.querySelectorAll('.voice-wave');
     const voiceStatus = document.getElementById('voice-status');
 
-    if (!voiceButton || voiceWaves.length === 0 || !voiceStatus) {
-        console.error("Voice interface elements not found.");
+    if (!voiceButton || !voiceWaves.length || !voiceStatus) return;
+
+    voiceStatus.textContent = statusText;
+    if (isActive) {
+        voiceButton.classList.add('active');
+        voiceWaves.forEach(wave => wave.style.animationPlayState = 'running');
+    } else {
+        voiceButton.classList.remove('active');
+        voiceWaves.forEach(wave => wave.style.animationPlayState = 'paused');
+        isAwake = false;
+    }
+}
+
+function initializeVoiceInterface() {
+    const voiceButton = document.getElementById('voice-btn');
+    const languageSelect = document.getElementById('language-select');
+
+    if (!voiceButton || !('webkitSpeechRecognition' in window)) {
+        console.error("Voice interface or Speech Recognition API not supported.");
+        updateVoiceUI(false, "Voice not supported");
+        if (voiceButton) voiceButton.disabled = true;
         return;
     }
+    
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = languageSelect.value;
+
+    recognition.onstart = () => {
+        isListening = true;
+        recognitionStopFlag = false;
+        const status = isAwake ? 'Listening...' : 'Dormant | Say "Jarvis" or "Javed"';
+        updateVoiceUI(true, status);
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        if (!recognitionStopFlag) {
+            recognition.start(); // Auto-restart unless manually stopped
+        } else {
+            updateVoiceUI(false, 'Click to start listening');
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        const status = event.error === 'not-allowed' ? 'Mic access blocked' : 'Error listening';
+        updateVoiceUI(false, status);
+    };
+
+    recognition.onresult = (event) => {
+        // FIX: Ignore recognition results while the AI is speaking
+        if (isSpeaking) {
+            return;
+        }
+
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            }
+        }
+
+        const transcript = finalTranscript.toLowerCase().trim();
+        if (!transcript) return;
+
+        if (!isAwake) {
+            if (transcript.includes('jarvis') || transcript.includes('javed') || transcript.includes('जावेद')) {
+                console.log("Wake word detected!");
+                isAwake = true;
+                speakText("Ready to go sir", 'en-US');
+                updateVoiceUI(true, 'Listening...');
+                clearTimeout(silenceTimeout);
+                silenceTimeout = setTimeout(() => {
+                    if (isAwake) {
+                        isAwake = false;
+                        updateVoiceUI(true, 'Dormant | Say "Jarvis" or "Javed"');
+                    }
+                }, 5000);
+            }
+        } else {
+            clearTimeout(silenceTimeout);
+            handleUserMessage(transcript);
+            isAwake = false;
+            updateVoiceUI(true, 'Dormant | Say "Jarvis" or "Javed"');
+        }
+    };
 
     voiceButton.addEventListener('click', () => {
-        const isActive = voiceButton.classList.toggle('active');
-
-        if (isActive) {
-            voiceStatus.textContent = 'Listening...';
-            voiceWaves.forEach(wave => {
-                wave.style.animationPlayState = 'running';
-            });
-
-            setTimeout(() => {
-                addMessage("I'm processing your voice command.", 'user');
-                showTypingIndicator();
-                setTimeout(() => {
-                    addMessage("Voice command processed. Navigating to the nearest charging station.", 'ai');
-                    voiceButton.classList.remove('active');
-                    voiceStatus.textContent = 'Click to speak';
-                    voiceWaves.forEach(wave => {
-                        wave.style.animationPlayState = 'paused';
-                    });
-                }, 1500);
-            }, 3000);
+        if (isListening) {
+            recognitionStopFlag = true;
+            recognition.stop();
         } else {
-            voiceStatus.textContent = 'Click to speak';
-            voiceWaves.forEach(wave => {
-                wave.style.animationPlayState = 'paused';
-            });
+            try {
+                window.speechSynthesis.cancel();
+                recognition.start();
+            } catch (e) {
+                console.error("Could not start recognition:", e);
+                updateVoiceUI(false, 'Recognition blocked');
+            }
         }
     });
 }
 
-/**
- * Initializes the chat input form for sending text messages.
- */
+async function speakText(text, langCode = 'en-US') {
+    if (!('speechSynthesis' in window)) return;
+    
+    // Stop listening while we prepare to speak
+    if (isListening) {
+        recognition.stop();
+    }
+
+    await loadVoices();
+    window.speechSynthesis.cancel(); // Cancel any ongoing speech
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    const stopSpeechBtn = document.getElementById('stop-speech-btn');
+    
+    const selectedVoice = availableVoices.find(voice => voice.lang === langCode) || availableVoices.find(voice => voice.lang.startsWith(langCode.split('-')[0]));
+    utterance.voice = selectedVoice || null;
+    utterance.lang = langCode;
+
+    // FIX: Control the isSpeaking flag and recognition state
+    utterance.onstart = () => {
+        isSpeaking = true;
+        if (stopSpeechBtn) stopSpeechBtn.style.display = 'block';
+    };
+    
+    utterance.onend = () => {
+        isSpeaking = false;
+        if (stopSpeechBtn) stopSpeechBtn.style.display = 'none';
+        if (!recognitionStopFlag && recognition) {
+            try {
+                recognition.start();
+            } catch(e) { console.error("Could not restart recognition after speech:", e); }
+        }
+    };
+
+    utterance.onerror = (e) => {
+        console.error("Speech synthesis error:", e);
+        isSpeaking = false;
+        if (stopSpeechBtn) stopSpeechBtn.style.display = 'none';
+        if (!recognitionStopFlag && recognition) {
+            try {
+                recognition.start();
+            } catch(err) { console.error("Could not restart recognition after speech error:", err); }
+        }
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
+
+
 function initializeChatInput() {
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
-    
-    if (!chatForm || !messageInput) {
-        console.error("Chat form elements not found.");
-        return;
-    }
-
-    chatForm.addEventListener('submit', function(event) {
-        event.preventDefault(); 
-        handleUserMessage(messageInput.value);
-        messageInput.value = '';
-    });
-}
-
-/**
- * Handles the logic for sending a user message and getting an AI response.
- * @param {string} text - The user's message text.
- */
-function handleUserMessage(text) {
-    const userText = text.trim();
-    if (userText) {
-        addMessage(userText, 'user');
-        showTypingIndicator();
-        setTimeout(() => {
-            const aiResponse = getAIResponse(userText);
-            addMessage(aiResponse, 'ai');
-        }, 1200); // Simulate thinking delay
-    }
-}
-
-/**
- * Initializes the clear chat button.
- */
-function initializeClearChat() {
-    const clearButton = document.getElementById('clear-chat-btn');
-    const chatMessagesContainer = document.getElementById('chat-messages');
-
-    if (!clearButton || !chatMessagesContainer) {
-        console.error("Clear chat button or message container not found.");
-        return;
-    }
-
-    clearButton.addEventListener('click', () => {
-        chatMessagesContainer.innerHTML = '';
-        addMessage("Hello! I'm JARVIS, your AI automotive companion. How can I assist you today?", 'ai');
-    });
-}
-
-/**
- * Initializes the suggested prompt buttons.
- */
-function initializeSuggestedPrompts() {
-    const promptsContainer = document.getElementById('suggested-prompts');
-    if (!promptsContainer) return;
-
-    promptsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('prompt-btn')) {
-            const promptText = e.target.textContent;
-            handleUserMessage(promptText);
+    chatForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const userText = messageInput.value.trim();
+        if (userText) {
+            handleUserMessage(userText);
+            messageInput.value = '';
         }
     });
 }
 
-/**
- * Shows a typing indicator in the chat window.
- */
-function showTypingIndicator() {
-    const chatMessagesContainer = document.getElementById('chat-messages');
-    if (!chatMessagesContainer) return;
+async function handleUserMessage(text) {
+    const userText = text.trim();
+    if (!userText) return;
 
-    // Remove existing indicator if any
-    const existingIndicator = chatMessagesContainer.querySelector('.typing-indicator-message');
-    if (existingIndicator) {
-        existingIndicator.remove();
+    const languageSelect = document.getElementById('language-select');
+    const currentLanguageCode = isListening ? recognition.lang : (languageSelect.value || 'en-US');
+    
+    addMessage(userText, 'user');
+    conversationHistory.push({ role: 'user', parts: [{ text: userText }] });
+    showTypingIndicator();
+
+    try {
+        const response = await fetch(API_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversationHistory: conversationHistory,
+                currentLanguage: currentLanguageCode,
+            }),
+        });
+
+        if (!response.ok) throw new Error(`Network response error: ${response.status}`);
+        
+        const data = await response.json();
+        addMessage(data.reply, 'ai', data.language, true);
+        conversationHistory.push({ role: 'model', parts: [{ text: data.reply }] });
+
+    } catch (error) {
+        console.error("Error getting AI response:", error);
+        addMessage("Sorry, I'm having trouble connecting.", 'ai', 'en-US', true);
     }
-
-    const indicatorWrapper = document.createElement('div');
-    indicatorWrapper.className = 'message ai-message typing-indicator-message';
-    indicatorWrapper.innerHTML = `
-        <i class="fas fa-robot"></i>
-        <div>
-            <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    `;
-    chatMessagesContainer.appendChild(indicatorWrapper);
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }
 
-
-/**
- * A utility function to add a new message to the chat interface.
- * @param {string} text - The content of the message.
- * @param {string} type - The type of message ('user' or 'ai').
- */
-function addMessage(text, type) {
+function addMessage(text, type, langCode = 'en-US', speak = false) {
     const chatMessagesContainer = document.getElementById('chat-messages');
-    if (!chatMessagesContainer) return;
-
-    // Remove typing indicator before adding new message
     const typingIndicator = chatMessagesContainer.querySelector('.typing-indicator-message');
-    if (typingIndicator) {
-        typingIndicator.remove();
-    }
+    if (typingIndicator) typingIndicator.remove();
 
     const messageWrapper = document.createElement('div');
-    const iconClass = type === 'user' ? 'fa-user' : 'fa-robot';
-    const messageClass = type === 'user' ? 'user-message' : 'ai-message';
-
-    messageWrapper.className = `message ${messageClass}`;
+    messageWrapper.className = `message ${type === 'user' ? 'user-message' : 'ai-message'}`;
+    messageWrapper.innerHTML = `<i class="fas fa-${type === 'user' ? 'user' : 'robot'}"></i><div>${text}</div>`;
     
-    const messageContent = document.createElement('div');
-    messageContent.textContent = text;
-
-    messageWrapper.innerHTML = `<i class="fas ${iconClass}"></i>`;
-    messageWrapper.appendChild(messageContent);
-
     chatMessagesContainer.appendChild(messageWrapper);
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+
+    if (speak && type === 'ai') {
+        speakText(text, langCode);
+    }
 }
 
-/**
- * Simulates an AI response based on user input.
- * @param {string} userInput - The text sent by the user.
- * @returns {string} - The AI's reply.
- */
-function getAIResponse(userInput) {
-    const lowerInput = userInput.toLowerCase();
-
-    if (lowerInput.includes('engine')) {
-        return 'Engine status: All systems are nominal. Coolant Temperature is at 92°C, and Oil Pressure is stable at 45 PSI.';
-    }
-    if (lowerInput.includes('nav') || lowerInput.includes('destination') || lowerInput.includes('route')) {
-        return 'Navigation system is ready. Please state your destination, or I can suggest nearby points of interest.';
-    }
-    if (lowerInput.includes('tire') || lowerInput.includes('pressure')) {
-        return 'Tire pressure is optimal on all four wheels, reading at 32 PSI.';
-    }
-    if (lowerInput.includes('music') || lowerInput.includes('song')) {
-        return 'Accessing media player. What would you like to listen to?';
-    }
-    if (lowerInput.includes('climate') || lowerInput.includes('temp')) {
-        return 'Climate control is currently set to 22°C in auto mode. Air quality is optimal. Would you like to make an adjustment?';
-    }
-    if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
-        return 'Hello there! How can I assist you with the vehicle today?';
-    }
-    
-    return "I've received your message. I am processing the information now.";
+function initializeClearChat() {
+    const clearButton = document.getElementById('clear-chat-btn');
+    const chatMessagesContainer = document.getElementById('chat-messages');
+    clearButton.addEventListener('click', () => {
+        chatMessagesContainer.innerHTML = '';
+        conversationHistory = [];
+        addMessage("Hello! I'm JARVIS. How can I assist you today?", 'ai', 'en-US', false);
+    });
 }
 
-function googleTranslateElementInit() {
-    new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        autoDisplay: false
-    }, 'google_translate_element');
+function initializeSuggestedPrompts() {
+    const promptsContainer = document.getElementById('suggested-prompts');
+    promptsContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('prompt-btn')) {
+            handleUserMessage(e.target.textContent);
+        }
+    });
+}
+
+function showTypingIndicator() {
+    const chatMessagesContainer = document.getElementById('chat-messages');
+    const existingIndicator = chatMessagesContainer.querySelector('.typing-indicator-message');
+    if (existingIndicator) return;
+    const indicatorWrapper = document.createElement('div');
+    indicatorWrapper.className = 'message ai-message typing-indicator-message';
+    indicatorWrapper.innerHTML = `<i class="fas fa-robot"></i><div><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+    chatMessagesContainer.appendChild(indicatorWrapper);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }

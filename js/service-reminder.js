@@ -1,248 +1,263 @@
-// service-reminder.js
-
 /**
- * Primary entry point after the DOM is fully loaded.
+ * @file service-reminder.js
+ * @description Main script for the Service Reminder page.
+ * Fetches and displays vehicle service status and history.
+ * Implements smart, non-flickering UI updates.
+ * Loads and initializes shared components like header and chatbot using jQuery.
  */
-document.addEventListener('DOMContentLoaded', () => {
-    // Load shared components (header and chatbot)
-    loadSharedComponents();
 
-    // Initialize all page-specific functionalities
-    initializePageAnimations();
-    initializeStatCounters();
-    initializeFloatingParticles();
-    setupButtonInteractions();
-    setupPagination(); // This function is now updated
-});
+// Scope guard to prevent script from running multiple times
+if (typeof window.ServiceReminderInitialized === 'undefined') {
+    window.ServiceReminderInitialized = true;
 
-/**
- * Loads shared components from external files.
- */
-async function loadSharedComponents() {
-    try {
-        const headerPlaceholder = document.getElementById('header-placeholder');
-        if (headerPlaceholder) {
-            const headerResponse = await fetch('/header/header.html');
-            headerPlaceholder.innerHTML = await headerResponse.text();
-            loadScript('/header/header.js');
-        }
+    const API_BASE_URL = 'http://localhost:3001';
+    const POLLING_INTERVAL = 5000; // 5 seconds
+
+    // --- COMPONENT LOADING (jQuery Method) ---
+    $(function(){
+        // Load the header component and its script
+        $("#header-placeholder").load("/header/header.html", function() {
+            $.getScript("/header/header.js");
+            console.log("Header loaded.");
+        });
+
+        // Load the chatbot component and its script
+        $("#chatbot-placeholder").load("/chatbot/chatbot.html", function() {
+            $.getScript("/chatbot/chatbot.js");
+            console.log("Chatbot loaded.");
+        });
+
+        // Initialize the rest of the page once the document is ready
+        initializePage();
+    });
+
+    // --- CORE LOGIC ---
+    function initializePage() {
+        initializePagination();
+        setupEventListeners();
+
+        fetchAndDisplayData();
+        setInterval(fetchAndDisplayData, POLLING_INTERVAL);
         
-        const chatbotPlaceholder = document.getElementById('chatbot-placeholder');
-        if (chatbotPlaceholder) {
-            const chatbotResponse = await fetch('/chatbot/chatbot.html');
-            chatbotPlaceholder.innerHTML = await chatbotResponse.text();
-            loadScript('/chatbot/chatbot.js');
-        }
-
-    } catch (error) {
-        console.error('JARVIS Error: Could not load shared components.', error);
+        console.log("Service Reminder page initialized.");
     }
-}
+    
+    async function fetchAndDisplayData() {
+        try {
+            const [statusData, historyData] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/get_status`).then(res => res.json()),
+                fetch(`${API_BASE_URL}/api/get_history`).then(res => res.json())
+            ]);
+            updateServiceCards(statusData);
+            updateTimeline(historyData);
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+        }
+    }
 
-/**
- * Dynamically creates and appends a script tag to the body.
- * @param {string} src - The source URL of the script to load.
- */
-function loadScript(src) {
-    const script = document.createElement('script');
-    script.src = src;
-    script.defer = true;
-    document.body.appendChild(script);
-}
+    // --- PAGINATION ---
+    function initializePagination() {
+        const pageContainer = document.querySelector('.page-container');
+        const pages = document.querySelectorAll('.page');
+        const paginationContainer = document.querySelector('.pagination-dots');
+        if (!pageContainer || pages.length === 0) return;
 
-/**
- * Initializes the initial "fade-in" animations for the first page.
- */
-function initializePageAnimations() {
-    const firstPage = document.querySelector('.page');
-    if (!firstPage) return;
+        paginationContainer.innerHTML = '';
+        pages.forEach(page => {
+            const dot = document.createElement('div');
+            dot.className = 'pagination-dot';
+            dot.dataset.sectionId = page.id;
+            dot.title = page.id.charAt(0).toUpperCase() + page.id.slice(1);
+            dot.innerHTML = `<i class="fas fa-${getPageIcon(page.id)}"></i>`;
+            dot.addEventListener('click', () => page.scrollIntoView({ behavior: 'smooth' }));
+            paginationContainer.appendChild(dot);
+        });
+        
+        pageContainer.addEventListener('scroll', debounce(highlightActivePage, 100));
+        highlightActivePage();
+    }
 
-    const elementsToAnimate = firstPage.querySelectorAll('.animate-fade-in, .animate-slide-up, .animate-scale-in, .animate-bounce-in');
-    elementsToAnimate.forEach((el) => {
-        const delay = parseInt(el.dataset.delay, 10) || 0;
-        setTimeout(() => {
-            el.style.opacity = '1';
-            el.style.transform = 'translateY(0) scale(1)';
-        }, delay);
-    });
-}
+    function getPageIcon(pageId) {
+        const icons = { 'status': 'clipboard-check', 'history': 'history' };
+        return icons[pageId] || 'circle';
+    }
 
-/**
- * Animates all progress bars to their target width when they become visible.
- * @param {Element} pageElement - The page section that is currently visible.
- */
-function animateProgressBars(pageElement) {
-    const progressBars = pageElement.querySelectorAll('.progress-fill');
-    setTimeout(() => {
-        progressBars.forEach(bar => {
-            const progress = bar.getAttribute('data-progress');
-            if (progress) {
-                bar.style.width = progress + '%';
+    function highlightActivePage() {
+        const pageContainer = document.querySelector('.page-container');
+        const dots = document.querySelectorAll('.pagination-dot');
+        const scrollPosition = pageContainer.scrollTop;
+        const containerHeight = pageContainer.clientHeight;
+
+        let activeSectionId = null;
+        document.querySelectorAll('.page').forEach(page => {
+            if (scrollPosition >= page.offsetTop - containerHeight / 2) {
+                activeSectionId = page.id;
             }
         });
-    }, 200);
-}
 
-/**
- * Animates the hero statistics, counting up from 0 to the target number.
- */
-function initializeStatCounters() {
-    const counters = document.querySelectorAll('.stat-number');
-    const animationDuration = 2000;
+        dots.forEach(dot => {
+            dot.classList.toggle('active', dot.dataset.sectionId === activeSectionId);
+        });
+    }
 
-    counters.forEach(counter => {
-        const target = parseFloat(counter.getAttribute('data-target'));
-        if (isNaN(target)) return;
+    // --- SMART UI UPDATES ---
+    function updateServiceCards(services) {
+        const grid = document.querySelector('.service-cards-grid');
+        if (!grid) return;
 
-        let startTime = null;
-        const step = (timestamp) => {
-            if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / animationDuration, 1);
-            const currentValue = progress * target;
+        services.forEach(service => {
+            const serviceId = service.service_name.replace(/\s+/g, '-').toLowerCase();
+            let card = grid.querySelector(`[data-service-id="${serviceId}"]`);
 
-            counter.textContent = (target % 1 !== 0) ? currentValue.toFixed(1) : Math.floor(currentValue);
-
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
+            if (!card) {
+                card = createServiceCard(service);
+                grid.appendChild(card);
             } else {
-                counter.textContent = (target % 1 !== 0) ? target.toFixed(1) : target;
-            }
-        };
-        window.requestAnimationFrame(step);
-    });
-}
-
-/**
- * Sets up an IntersectionObserver to handle animations and pagination updates as different pages are scrolled into view, and adds click handlers to dots.
- */
-function setupPagination() {
-    const pages = document.querySelectorAll('.page');
-    const paginationContainer = document.querySelector('.pagination-dots');
-    const pageContainer = document.querySelector('.page-container');
-
-    if (!pageContainer || pages.length === 0 || !paginationContainer) {
-        console.error("Pagination elements not found. Aborting setup.");
-        return;
-    }
-    
-    const pageInfo = [
-        { id: 'hero', title: 'Overview', icon: 'fas fa-tachometer-alt' },
-        { id: 'status', title: 'Service Status', icon: 'fas fa-clipboard-check' },
-        { id: 'history', title: 'Service History', icon: 'fas fa-history' }
-    ];
-
-    paginationContainer.innerHTML = ''; 
-
-    pages.forEach((page, index) => {
-        const info = pageInfo.find(p => p.id === page.id) || { title: `Section ${index + 1}`, icon: 'fas fa-circle' };
-
-        const dot = document.createElement('div');
-        dot.className = 'pagination-dot';
-        dot.dataset.section = index;
-        dot.title = info.title;
-
-        const icon = document.createElement('i');
-        icon.className = info.icon;
-        dot.appendChild(icon);
-
-        dot.addEventListener('click', (e) => {
-            e.preventDefault();
-            page.scrollIntoView({ behavior: 'smooth' });
-        });
-
-        paginationContainer.appendChild(dot);
-    });
-
-    const dots = paginationContainer.querySelectorAll('.pagination-dot');
-
-    const observerOptions = {
-        root: pageContainer,
-        threshold: 0.5,
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const pageId = entry.target.id;
-                const pageIndex = Array.from(pages).findIndex(p => p.id === pageId);
+                // Only update if data has changed
+                const valueEl = card.querySelector('.value');
+                if(valueEl.textContent !== service.detail_value) valueEl.textContent = service.detail_value;
                 
-                dots.forEach(dot => dot.classList.remove('active'));
-                if (dots[pageIndex]) {
-                    dots[pageIndex].classList.add('active');
-                }
+                const progressFill = card.querySelector('.progress-fill');
+                if(progressFill.style.width !== `${service.progress_percent}%`) progressFill.style.width = `${service.progress_percent}%`;
 
-                const elementsToAnimate = entry.target.querySelectorAll('.animate-fade-in, .animate-card-in, .animate-timeline-item');
-                elementsToAnimate.forEach(el => {
-                    const delay = parseInt(el.getAttribute('data-delay'), 10) || 0;
-                    setTimeout(() => {
-                        el.classList.add('animate-in');
-                    }, delay);
-                });
-
-                if (pageId === 'status') {
-                    animateProgressBars(entry.target);
-                }
+                const progressLabel = card.querySelector('.progress-label');
+                if(progressLabel.textContent !== service.progress_label) progressLabel.textContent = service.progress_label;
             }
         });
-    }, observerOptions);
-
-    pages.forEach(page => observer.observe(page));
-}
-
-
-/**
- * Generates and appends floating particle elements to the hero section background.
- */
-function initializeFloatingParticles() {
-    const particlesContainer = document.querySelector('.floating-particles');
-    if (!particlesContainer) return;
-    const particleCount = 20;
-
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = `${Math.random() * 100}%`;
-        particle.style.animationDelay = `${Math.random() * 6}s`;
-        particle.style.animationDuration = `${Math.random() * 4 + 3}s`;
-        particlesContainer.appendChild(particle);
-    }
-}
-
-/**
- * Attaches click event listeners to all interactive buttons on the page.
- */
-function setupButtonInteractions() {
-    document.body.addEventListener('click', (e) => {
-        const scheduleBtn = e.target.closest('.schedule-btn');
-        if (scheduleBtn) {
-            const serviceName = scheduleBtn.closest('.service-card')?.querySelector('.card-title')?.textContent;
-            if (serviceName) {
-                showNotification(`Appointment request for "${serviceName}" submitted.`);
-            }
-        }
-    });
-}
-
-/**
- * Displays a temporary notification message on the screen.
- * @param {string} message - The message to display in the notification.
- */
-function showNotification(message) {
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-        existingNotification.remove();
     }
     
-    const notification = document.createElement('div');
-    notification.className = 'notification success';
-    notification.innerHTML = `<i class="fas fa-check-circle"></i><span>${message}</span>`;
-    document.body.appendChild(notification);
+    function createServiceCard(service) {
+        const serviceId = service.service_name.replace(/\s+/g, '-').toLowerCase();
+        const card = document.createElement('div');
+        card.className = `service-card ${service.status.toLowerCase()}`;
+        card.dataset.serviceId = serviceId;
+        const iconMap = {'oil change required': 'oil-can', 'brake system': 'car-burst', 'coolant system': 'temperature-three-quarters', 'battery health': 'car-battery'};
 
-    setTimeout(() => notification.classList.add('show'), 100);
-    setTimeout(() => {
-        notification.classList.remove('show');
-        notification.addEventListener('transitionend', () => notification.remove());
-    }, 4000);
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="service-icon ${service.status.toLowerCase()}-icon">
+                    <i class="fas fa-${iconMap[service.service_name.toLowerCase()] || 'cog'}"></i>
+                </div>
+                <div class="urgency-badge ${service.status.toLowerCase()}">${service.status}</div>
+            </div>
+            <h3 class="card-title">${service.service_name}</h3>
+            <div class="service-details">
+                <div class="detail-item">
+                    <span class="label">${service.detail_label || 'Status'}</span>
+                    <span class="value ${service.status.toLowerCase()}">${service.detail_value}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Last Service:</span>
+                    <span class="value">${formatDate(service.last_service_date)}</span>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill ${service.status.toLowerCase()}-progress" style="width: ${service.progress_percent}%"></div>
+                </div>
+                <div class="progress-label">${service.progress_label}</div>
+            </div>
+            <button class="schedule-btn ${service.status.toLowerCase()}-btn" data-service="${service.service_name}">
+                <i class="fas fa-calendar-plus"></i> Schedule Service
+            </button>
+        `;
+        return card;
+    }
+    
+    function updateTimeline(history) {
+        const timeline = document.querySelector('.timeline');
+        if (!timeline) return;
+        
+        timeline.innerHTML = ''; 
+        history.forEach((item, index) => {
+            timeline.appendChild(createTimelineItem(item, index));
+        });
+
+        const lastItem = timeline.querySelector('.timeline-item:last-child');
+        if (lastItem) {
+            const timelineHeight = lastItem.offsetTop + lastItem.offsetHeight;
+            timeline.style.setProperty('--timeline-height', `${timelineHeight}px`);
+        } else {
+             timeline.style.setProperty('--timeline-height', `0px`);
+        }
+    }
+    
+    function createTimelineItem(item) {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'timeline-item';
+        itemEl.innerHTML = `
+            <div class="timeline-marker"><i class="fas fa-wrench"></i></div>
+            <div class="timeline-content">
+                <div class="timeline-header">
+                    <h4>${item.title}</h4>
+                    <span class="timeline-date">${formatDate(item.service_date)}</span>
+                </div>
+                <p>${item.description}</p>
+            </div>
+        `;
+        return itemEl;
+    }
+
+    function setupEventListeners() {
+        document.body.addEventListener('click', function(e) {
+            if (e.target.closest('.schedule-btn')) {
+                const btn = e.target.closest('.schedule-btn');
+                scheduleService(btn.dataset.service);
+            }
+        });
+    }
+
+    async function scheduleService(serviceName) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/schedule_service`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service_name: serviceName })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                showNotification('Service scheduled successfully!', 'success');
+                fetchAndDisplayData();
+            } else {
+                throw new Error(data.message || 'Failed to schedule.');
+            }
+        } catch (error) {
+            showNotification(`Error: ${error.message}`, 'error');
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.classList.add('show'), 10);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => notification.remove());
+        }, 4000);
+    }
+
+    // --- UTILITY FUNCTIONS ---
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    }
 }
 
 function googleTranslateElementInit() {

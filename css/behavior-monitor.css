@@ -262,7 +262,6 @@ body::after {
     gap: 12px;
 }
 
-/* Override for icon color within animated header */
 .header-left h2 i {
     background: none; 
     -webkit-text-fill-color: var(--accent-blue);
@@ -277,12 +276,54 @@ body::after {
 .btn-primary:hover { background: var(--accent-green); transform: translateY(-1px); }
 .btn-secondary:hover { border-color: var(--accent-blue); color: var(--accent-blue); transform: translateY(-1px); }
 
+/* --- REVISED STYLES for Page 1 Layout --- */
+#page1 .page-content-wrapper {
+    display: grid;
+    grid-template-rows: auto 1fr; /* Row for header, row for main content */
+    gap: 20px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.dashboard-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "scores metrics"
+        "events metrics";
+    gap: 20px;
+    overflow: hidden;
+}
+
+.score-cards-section { grid-area: scores; }
+.events-section { grid-area: events; }
+.metrics-breakdown-section { grid-area: metrics; }
+
+.metrics-breakdown-section, .events-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 25px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.metrics-grid, .events-timeline {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.metrics-grid::-webkit-scrollbar, .events-timeline::-webkit-scrollbar { display: none; }
+.metrics-grid, .events-timeline { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Score Cards Section */
-.score-cards-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; flex-grow: 1; }
+.score-cards-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .score-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: all 0.3s ease; }
 .score-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2); }
 [data-theme="light"] .score-card:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-.score-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 15px; background: none; -webkit-text-fill-color: initial; animation: none; } /* Reset for card headers */
+.score-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 15px; background: none; -webkit-text-fill-color: initial; animation: none; }
 .score-display { display: flex; align-items: baseline; margin-bottom: 10px; }
 .score-value { font-size: 48px; font-weight: bold; line-height: 1; }
 .score-card.overall-score .score-value, .score-card.speed-control .score-value { color: var(--accent-orange); }
@@ -297,28 +338,66 @@ body::after {
 .score-status.excellent { color: var(--accent-green); }
 .score-status.good { color: var(--accent-orange); }
 
-/* Metrics Breakdown Section */
-.metrics-breakdown-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; height: 100%; transition: background-color 0.3s ease, border-color 0.3s ease;}
 .section-header { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 20px 0; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; }
+.section-header i { background: none; -webkit-text-fill-color: var(--accent-blue); animation: none; }
 
-/* Override for icon color within animated header */
-.section-header i {
-    background: none; 
-    -webkit-text-fill-color: var(--accent-blue); 
-    animation: none;
+/* --- MODIFIED for 3-row metrics layout --- */
+.metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.metric-row-2-items {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.metric-row-4-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
 .metric-item { background: var(--secondary-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 8px; transition: background-color 0.3s ease, border-color 0.3s ease;}
 .metric-label { font-size: 14px; color: var(--text-secondary); }
 .metric-bar { display: flex; align-items: center; gap: 10px; }
 .metric-score { font-size: 16px; font-weight: bold; color: var(--text-primary); }
-.metric-event-count { display: flex; align-items: baseline; gap: 5px; }
-.event-number { font-size: 24px; font-weight: bold; color: var(--accent-orange); line-height: 1; }
-.event-period { font-size: 12px; color: var(--text-secondary); }
 
-/* Recent Driving Events */
-.events-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; height: 100%; transition: background-color 0.3s ease, border-color 0.3s ease;}
+/* Styles for event metric cards with icons */
+.metric-item.event-metric {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+}
+.event-metric-icon {
+    font-size: 20px;
+    color: var(--accent-orange);
+    background-color: rgba(255, 136, 0, 0.1);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.event-metric-details {
+    display: flex;
+    flex-direction: column;
+}
+.event-metric-details .event-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+.event-metric-details .metric-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
 .events-timeline { display: flex; flex-direction: column; gap: 15px; }
 .event-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; border-left: 4px solid; }
 .event-item.warning { background: rgba(255, 136, 0, 0.08); border-color: var(--accent-orange); }
@@ -344,21 +423,8 @@ body::after {
 .summary-value, .trend-value { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .summary-value.good, .summary-value.excellent, .trend-value.improvement { color: var(--accent-green); }
 .achievement-header { display: flex; align-items: center; gap: 8px; color: var(--accent-green); }
-
-/* Override for achievement header h3 */
-.achievement-header h3 {
-    background: linear-gradient(90deg, var(--accent-green), #ffffff, var(--accent-green));
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: text-gradient-animation 5s ease-in-out infinite;
-}
-.achievement-header h3 i {
-    background: none;
-    -webkit-text-fill-color: var(--accent-green);
-    animation: none;
-}
-
+.achievement-header h3 { background: linear-gradient(90deg, var(--accent-green), #ffffff, var(--accent-green)); background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: text-gradient-animation 5s ease-in-out infinite; }
+.achievement-header h3 i { background: none; -webkit-text-fill-color: var(--accent-green); animation: none; }
 .achievement-content { display: flex; align-items: center; gap: 15px; text-align: left; }
 .achievement-icon { width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 255, 136, 0.15); color: var(--accent-green); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
 .achievement-text h4 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 5px 0; }
@@ -380,8 +446,16 @@ body::after {
     .main-content { padding-right: 40px; padding-left: 10px; }
     .page-wrapper { width: calc(100% - 50px); }
     .vertical-pagination { right: -30px; }
-    .metrics-grid { grid-template-columns: 1fr; }
+    .metric-row-4-items { grid-template-columns: repeat(2, 1fr); }
     .summary-insights-grid { grid-template-columns: 1fr; }
+    .dashboard-layout-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+            "scores"
+            "metrics"
+            "events";
+    }
 }
 
 @media (max-width: 768px) {

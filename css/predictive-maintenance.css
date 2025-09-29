@@ -50,6 +50,105 @@ body {
     position: relative;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
+/* ADD THIS CODE TO YOUR /css/predictive-maintenance.css FILE */
+
+/* Grid container for the metric cards */
+.maintenance-grid {
+    display: grid;
+    /* Creates 2 columns on wider screens, and 1 on smaller screens */
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
+    gap: 25px; /* Sets the space between cards */
+    max-width: 1600px;
+    margin: 40px auto; /* Adds space above/below and centers the grid */
+    padding: 0 20px;
+}
+
+/* Individual metric card styling */
+.metric-card {
+    background-color: var(--secondary-bg); /* Uses the dark background from your variables */
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px); /* Lifts the card on hover */
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.1); /* Adds a subtle blue glow */
+}
+
+/* Card header (title and status badge) */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Status badge styling */
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-normal {
+    background-color: rgba(0, 255, 136, 0.1);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+}
+
+.status-warning {
+    background-color: rgba(255, 136, 0, 0.1);
+    color: var(--accent-orange);
+    border: 1px solid var(--accent-orange);
+}
+
+.status-critical {
+    background-color: rgba(255, 68, 68, 0.1);
+    color: var(--accent-red);
+    border: 1px solid var(--accent-red);
+}
+
+/* Chart container styling */
+.chart-container {
+    position: relative;
+    height: 200px; /* Defines the height for the chart area */
+}
+
+/* LLM Analysis Card */
+.llm-card {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-width: 1600px;
+    margin: 40px auto;
+    padding: 25px;
+}
+
+.llm-card .icon-gradient {
+    background: linear-gradient(45deg, var(--accent-blue), var(--accent-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-right: 10px;
+}
+
+.llm-content p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+}
 
 /* Holographic Background Effects */
 body::before {
@@ -96,7 +195,7 @@ body::after {
 
 /* Main Content */
 .main-content {
-    padding: 120px 20px 10px;
+    padding: 80px 20px 10px;
     position: relative;
     scroll-behavior: smooth;
 }
@@ -422,6 +521,17 @@ body::after {
 .event-popup { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px; min-width: 120px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 5; }
 .timeline-event:hover .event-popup { opacity: 1; visibility: visible; }
 .timeline-labels { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-secondary); }
+/* In /css/predictive-maintenance.css */
+
+.maintenance-grid {
+    display: grid;
+    /* This forces the grid into 4 equal columns. Change '4' to '3' if you only have 3 cards. */
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 25px; 
+    max-width: 1600px;
+    margin: 40px auto; 
+    padding: 0 20px;
+}
 
 /* Recommendations */
 .recommendations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
